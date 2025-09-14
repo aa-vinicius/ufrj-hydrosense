@@ -147,9 +147,22 @@ python create_plots.py
 - **Visualization**: matplotlib
 - **Statistical Analysis**: scipy
 - **Data Processing**: openpyxl
+- **Testing**: pytest, pytest-cov
+- **Development**: black, flake8, mypy (optional)
 
 ## 📋 Requirements
 
+### **Production Requirements**
+```bash
+pip install -r requirements.txt
+```
+
+### **Development Requirements** 
+```bash
+pip install -r requirements-dev.txt
+```
+
+### **Core Dependencies**
 ```
 pandas>=2.0.0
 scikit-learn>=1.3.0
@@ -157,6 +170,7 @@ matplotlib>=3.5.0
 openpyxl>=3.1.0
 numpy>=1.24.0
 scipy>=1.10.0
+pytest>=7.0.0
 ```
 
 ## 🎯 Business Value
@@ -191,13 +205,110 @@ scipy>=1.10.0
 - **Spatial Modeling**: Incorporate upstream-downstream relationships
 - **Climate Change Adaptation**: Long-term trend analysis and adjustment
 
+## 🧪 Testing
+
+Light HydroSense includes a comprehensive test suite following Test-Driven Development (TDD) principles.
+
+### **Test Structure**
+```
+tests/
+├── 📁 unit/                    # Unit tests for individual functions
+│   ├── test_flow_prediction_app.py
+│   ├── test_model2_error_prediction.py
+│   ├── test_evaluation_methods.py
+│   └── test_plotting_methods.py
+├── 📁 integration/             # End-to-end pipeline tests
+│   └── test_complete_pipeline.py
+├── 📁 fixtures/                # Test data generators
+│   └── test_data_generator.py
+├── conftest.py                 # Shared test fixtures
+└── test_markers.py             # Test categorization examples
+```
+
+### **Running Tests**
+
+#### **Quick Test Commands**
+```bash
+# Run all tests
+python run_tests.py --all
+
+# Run specific test categories
+python run_tests.py --unit                    # Unit tests only
+python run_tests.py --integration             # Integration tests only
+python run_tests.py --category model1         # Model 1 tests
+python run_tests.py --category model2         # Model 2 tests
+python run_tests.py --coverage                # Tests with coverage report
+```
+
+#### **Advanced Testing Options**
+```bash
+# Performance and scalability tests
+python run_tests.py --performance
+
+# Validate test structure
+python run_tests.py --validate
+
+# Check dependencies
+python run_tests.py --check-deps
+
+# Run specific test file
+pytest tests/unit/test_flow_prediction_app.py -v
+
+# Run tests with specific markers
+pytest -m "fast and unit" -v
+pytest -m "slow or integration" -v
+```
+
+### **Test Categories (Markers)**
+- `unit` - Unit tests for individual functions
+- `integration` - End-to-end pipeline tests  
+- `fast` - Quick tests (< 1 second)
+- `slow` - Longer tests (> 1 second)
+- `model1` - Flow prediction model tests
+- `model2` - Error prediction model tests
+- `plotting` - Visualization tests
+- `evaluation` - Performance evaluation tests
+- `pipeline` - Complete workflow tests
+
+### **Coverage Reports**
+```bash
+# Generate HTML coverage report
+python run_tests.py --coverage
+
+# View coverage report
+open htmlcov/index.html  # macOS
+xdg-open htmlcov/index.html  # Linux
+```
+
+### **Test Development**
+```bash
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Run tests during development
+pytest tests/ -v --tb=short
+
+# Run tests with file watching (requires pytest-watch)
+ptw tests/ src/
+```
+
 ## 🔧 Development
 
 ### **Adding New Features**
-1. Create new modules in `src/` directory
-2. Update `run_analysis.py` if new scripts need to be executed
-3. Ensure outputs are saved to `outputs/` directory
-4. Update documentation in `docs/` directory
+1. **Write tests first** (TDD approach)
+   ```bash
+   # Create test file
+   touch tests/unit/test_new_feature.py
+   
+   # Write failing tests
+   # Implement feature to make tests pass
+   ```
+
+2. Create new modules in `src/` directory
+3. Update `run_analysis.py` if new scripts need to be executed
+4. Ensure outputs are saved to `outputs/` directory
+5. Update documentation in `docs/` directory
+6. **Run full test suite** to ensure no regressions
 
 ### **Testing Changes**
 ```bash
@@ -206,6 +317,24 @@ cd src && python <script_name>.py
 
 # Test complete pipeline
 python run_analysis.py
+
+# Run relevant tests
+python run_tests.py --category <relevant_category>
+
+# Run full test suite
+python run_tests.py --all
+```
+
+### **Code Quality**
+```bash
+# Format code (if black is installed)
+black src/ tests/
+
+# Check code style (if flake8 is installed)
+flake8 src/ tests/
+
+# Type checking (if mypy is installed)
+mypy src/
 ```
 
 ## 📞 Support
