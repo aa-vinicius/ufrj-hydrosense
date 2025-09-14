@@ -37,7 +37,7 @@ def process_flow_data():
     print("Processing flow data...")
     
     # Load flow data
-    flow_data = pd.read_excel('data/Vazao_FUNIL.xlsx', sheet_name='Vazao_FUNIL')
+    flow_data = pd.read_excel('../data/Vazao_FUNIL.xlsx', sheet_name='Vazao_FUNIL')
     
     # Convert Data column to datetime
     flow_data['Data'] = pd.to_datetime(flow_data['Data'])
@@ -67,7 +67,7 @@ def load_meteorological_data():
     """Load meteorological data"""
     print("Loading meteorological data...")
     
-    met_data = pd.read_csv('data/glob-funil-subbasin.csv')
+    met_data = pd.read_csv('../data/glob-funil-subbasin.csv')
     
     # Select relevant columns
     predictor_cols = ['u2_y', 'tmin_y', 'tmax_y', 'rs_y', 'rh_y', 'eto_y', 'pr_y']

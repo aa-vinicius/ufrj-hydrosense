@@ -66,7 +66,7 @@ def create_time_series_plots():
         plt.tight_layout()
         
         # Save the plot
-        filename = f'flow_prediction_station_{flow_col}_subbasin_{subbasin_id}.png'
+        filename = f'../outputs/flow_prediction_station_{flow_col}_subbasin_{subbasin_id}.png'
         plt.savefig(filename, dpi=300, bbox_inches='tight')
         print(f"Plot saved as '{filename}'")
         

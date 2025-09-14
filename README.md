@@ -77,6 +77,32 @@ Develop a robust monthly flow prediction system for hydroelectric power generati
 - **Nash-Sutcliffe**: 0.202
 - **Mean Flow**: 6.91 m³/s
 
+## 📁 Project Structure
+
+```
+light-hydrosense/
+├── 📁 src/                          # Source code
+│   ├── flow_prediction_app.py       # Main Model 1 implementation
+│   ├── model2_error_prediction.py   # Model 2 error prediction
+│   ├── evaluate_model1.py           # Model 1 evaluation
+│   ├── evaluate_model2.py           # Model 2 evaluation
+│   ├── create_plots.py              # Visualization generation
+│   └── __init__.py                  # Package initialization
+├── 📁 data/                         # Input datasets
+│   ├── glob-funil-subbasin.csv      # Meteorological data
+│   └── Vazao_FUNIL.xlsx             # Flow measurements
+├── 📁 outputs/                      # Generated results
+│   ├── model1_performance_metrics.csv
+│   ├── model2_error_prediction_metrics.csv
+│   ├── flow_prediction_station_58030000_subbasin_24.png
+│   └── flow_prediction_station_58060000_subbasin_36.png
+├── 📁 docs/                         # Documentation
+│   └── README_results.md            # Detailed results analysis
+├── 🚀 run_analysis.py               # Main execution script
+├── 📋 requirements.txt              # Dependencies
+└── 📖 README.md                     # This file
+```
+
 ## 🚀 Usage
 
 ### **Quick Start**
@@ -86,24 +112,33 @@ python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
-# Run complete analysis
+# Run complete analysis (recommended)
+python run_analysis.py
+```
+
+### **Individual Script Execution**
+```bash
+# From project root, run individual components:
+cd src
+
+# Model 1: Flow prediction
 python flow_prediction_app.py
 
-# Generate Model 1 evaluation
+# Model 1 evaluation
 python evaluate_model1.py
 
-# Generate Model 2 evaluation and plots
+# Model 2: Error prediction and evaluation
 python evaluate_model2.py
 
-# Create visualization
+# Generate visualizations
 python create_plots.py
 ```
 
 ### **Output Files**
-- `model1_performance_metrics.csv` - Detailed Model 1 performance metrics
-- `model2_error_prediction_metrics.csv` - Model 2 error prediction metrics
-- `flow_prediction_station_*.png` - Time series plots with confidence intervals
-- `README_results.md` - Comprehensive results documentation
+- `outputs/model1_performance_metrics.csv` - Detailed Model 1 performance metrics
+- `outputs/model2_error_prediction_metrics.csv` - Model 2 error prediction metrics
+- `outputs/flow_prediction_station_*.png` - Time series plots with confidence intervals
+- `docs/README_results.md` - Comprehensive results documentation
 
 ## 🔧 Technical Stack
 
@@ -156,6 +191,23 @@ scipy>=1.10.0
 - **Spatial Modeling**: Incorporate upstream-downstream relationships
 - **Climate Change Adaptation**: Long-term trend analysis and adjustment
 
+## 🔧 Development
+
+### **Adding New Features**
+1. Create new modules in `src/` directory
+2. Update `run_analysis.py` if new scripts need to be executed
+3. Ensure outputs are saved to `outputs/` directory
+4. Update documentation in `docs/` directory
+
+### **Testing Changes**
+```bash
+# Test individual components
+cd src && python <script_name>.py
+
+# Test complete pipeline
+python run_analysis.py
+```
+
 ## 📞 Support
 
-For technical questions or business inquiries regarding the Light HydroSense system, please refer to the detailed results documentation in `README_results.md`.
+For technical questions or business inquiries regarding the Light HydroSense system, please refer to the detailed results documentation in `docs/README_results.md`.
