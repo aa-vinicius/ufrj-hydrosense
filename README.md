@@ -336,7 +336,3 @@ flake8 src/ tests/
 # Type checking (if mypy is installed)
 mypy src/
 ```
-
-## 📞 Support
-
-For technical questions or business inquiries regarding the HydroSense system, please refer to the detailed results documentation in `docs/README_results.md`.
