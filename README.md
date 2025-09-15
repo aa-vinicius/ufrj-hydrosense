@@ -192,7 +192,7 @@ pytest>=7.0.0
 ### **Feature Importance** (Random Forest)
 1. **Precipitation (pr_y)**: Primary driver of flow variations
 2. **Evapotranspiration (eto_y)**: Seasonal water loss indicator
-3. **Temperature (tmin_y, tmax_y)**: Snowmelt and evaporation effects
+3. **Temperature (tmin_y, tmax_y)**: Dictate the physical, chemical, and biological processes within the water body
 4. **Solar Radiation (rs_y)**: Energy balance component
 5. **Humidity (rh_y)**: Atmospheric moisture content
 6. **Wind Speed (u2_y)**: Evaporation enhancement factor
