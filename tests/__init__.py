@@ -1,1 +1,1 @@
-# Light HydroSense Test Suite
+# HydroSense Test Suite
