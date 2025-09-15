@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Light HydroSense Test Runner
+HydroSense Test Runner
 
-Comprehensive test runner for the Light HydroSense project.
+Comprehensive test runner for the HydroSense project.
 Supports different test categories and provides detailed reporting.
 """
 
@@ -186,7 +186,7 @@ def validate_test_structure():
 def main():
     """Main test runner function."""
     parser = argparse.ArgumentParser(
-        description="Light HydroSense Test Runner",
+        description="HydroSense Test Runner",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -211,7 +211,7 @@ Examples:
     
     args = parser.parse_args()
     
-    print("🚀 Light HydroSense Test Runner")
+    print("🚀 HydroSense Test Runner")
     print("=" * 60)
     
     # Check dependencies first
@@ -274,7 +274,7 @@ Examples:
     
     if success_count == total_count:
         print("\n🎉 All tests completed successfully!")
-        print("\n🚀 Your Light HydroSense application is ready for production!")
+        print("\n🚀 Your HydroSense application is ready for production!")
         return 0
     else:
         print(f"\n⚠️  {total_count - success_count} test run(s) failed.")

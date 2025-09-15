@@ -1,5 +1,5 @@
 """
-Test data generators for Light HydroSense testing.
+Test data generators for HydroSense testing.
 """
 
 import pandas as pd

@@ -1,5 +1,5 @@
 """
-Pytest configuration and shared fixtures for Light HydroSense tests.
+Pytest configuration and shared fixtures for HydroSense tests.
 """
 
 import pytest

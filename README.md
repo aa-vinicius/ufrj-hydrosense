@@ -1,4 +1,4 @@
-# Light HydroSense
+# HydroSense
 
 An AI-powered R&D project that improves hydroelectric water flow predictions using a two-stage machine learning approach. By leveraging meteorological data and advanced ML algorithms, the project enhances monthly flow forecast accuracy with uncertainty quantification, leading to more efficient and sustainable energy generation.
 
@@ -80,7 +80,7 @@ Develop a robust monthly flow prediction system for hydroelectric power generati
 ## 📁 Project Structure
 
 ```
-light-hydrosense/
+ufrj-hydrosense/
 ├── 📁 src/                          # Source code
 │   ├── flow_prediction_app.py       # Main Model 1 implementation
 │   ├── model2_error_prediction.py   # Model 2 error prediction
@@ -207,7 +207,7 @@ pytest>=7.0.0
 
 ## 🧪 Testing
 
-Light HydroSense includes a comprehensive test suite following Test-Driven Development (TDD) principles.
+HydroSense includes a comprehensive test suite following Test-Driven Development (TDD) principles.
 
 ### **Test Structure**
 ```
@@ -339,4 +339,4 @@ mypy src/
 
 ## 📞 Support
 
-For technical questions or business inquiries regarding the Light HydroSense system, please refer to the detailed results documentation in `docs/README_results.md`.
+For technical questions or business inquiries regarding the HydroSense system, please refer to the detailed results documentation in `docs/README_results.md`.

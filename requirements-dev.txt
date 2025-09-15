@@ -1,4 +1,4 @@
-# Development and testing requirements for Light HydroSense
+# Development and testing requirements for HydroSense
 
 # Include base requirements
 -r requirements.txt

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Light HydroSense - Main Analysis Runner
+HydroSense - Main Analysis Runner
 
 This script runs the complete flow prediction analysis from the project root directory.
 It executes all models and generates outputs in the proper directory structure.
@@ -37,7 +37,7 @@ def run_script(script_path, description):
 
 def main():
     """Main analysis runner"""
-    print("🚀 Starting Light HydroSense Flow Prediction Analysis")
+    print("🚀 Starting HydroSense Flow Prediction Analysis")
     print("=" * 60)
     
     # Ensure output directories exist

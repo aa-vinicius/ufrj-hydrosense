@@ -1,5 +1,5 @@
 """
-Integration tests for the complete Light HydroSense pipeline.
+Integration tests for the complete HydroSense pipeline.
 
 Tests the end-to-end functionality of the entire system
 using Test-Driven Development (TDD) approach.

@@ -1,5 +1,5 @@
 """
-Test marker examples for Light HydroSense tests.
+Test marker examples for HydroSense tests.
 
 This file demonstrates how to use pytest markers to categorize tests.
 """
