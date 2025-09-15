@@ -1,1 +1,1 @@
-# Light HydroSense - Flow Prediction Package
+# HydroSense - Flow Prediction Package
