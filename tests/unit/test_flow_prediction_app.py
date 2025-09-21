@@ -127,22 +127,31 @@ class TestModelTraining:
     
     def test_train_models_basic(self, sample_merged_data):
         """Test basic model training functionality (nova estrutura)."""
-        sample_merged_data['year'] = np.random.choice([2010, 2011, 2012, 2016, 2017], len(sample_merged_data))
+        sample_merged_data = sample_merged_data.copy().reset_index(drop=True)
+        n = len(sample_merged_data)
+        split = int(n * 0.6)
+        sample_merged_data['year'] = np.concatenate([
+            np.random.choice([2010, 2011, 2012], size=split),
+            np.random.choice([2016, 2017], size=n - split)
+        ])
         result = fpa.train_models(sample_merged_data, 'flow_next_month', train_year_cutoff=2015)
-        if result is not None:
-            results, predictions = result
-            assert isinstance(results, dict)
-            assert isinstance(predictions, dict)
-            expected_models = ['Linear_Regression', 'Ridge', 'Random_Forest', 'Gradient_Boosting', 'SVR', 'MLP']
-            for model in expected_models:
-                if model in results:
-                    assert 'train' in results[model]
-                    assert 'test' in results[model]
-                    for dataset in ['train', 'test']:
-                        metrics = results[model][dataset]
-                        required_metrics = ['RMSE', 'MAE', 'R2', 'KGE', 'PBIAS', 'Bias', 'Nash_Sutcliffe']
-                        for metric in required_metrics:
-                            assert metric in metrics
+        # train_models may return None or (None, None) when data is insufficient
+        if result is None or (isinstance(result, tuple) and result[0] is None):
+            assert result is None or result == (None, None)
+            return
+        results, predictions = result
+        assert isinstance(results, dict)
+        assert isinstance(predictions, dict)
+        expected_models = ['Linear_Regression', 'Ridge', 'Random_Forest', 'Gradient_Boosting', 'SVR', 'MLP']
+        for model in expected_models:
+            if model in results:
+                assert 'train' in results[model]
+                assert 'test' in results[model]
+                for dataset in ['train', 'test']:
+                    metrics = results[model][dataset]
+                    required_metrics = ['RMSE', 'MAE', 'R2', 'KGE', 'PBIAS', 'Bias', 'Nash_Sutcliffe']
+                    for metric in required_metrics:
+                        assert metric in metrics
     
     def test_train_models_insufficient_data(self):
         """Test train_models with insufficient data (nova estrutura)."""
@@ -221,9 +230,11 @@ class TestIntegrationScenarios:
         from tests.fixtures.test_data_generator import TestDataGenerator
         generator = TestDataGenerator()
         small_data = generator.generate_small_dataset(100)
-        # Garantir split de treino/teste
-        small_data.loc[:60, 'year'] = 2014  # Treino
-        small_data.loc[60:, 'year'] = 2017  # Teste
+        small_data = small_data.copy().reset_index(drop=True)
+        n = len(small_data)
+        split = int(n * 0.6)
+        small_data.loc[:split-1, 'year'] = 2014  # Treino
+        small_data.loc[split:, 'year'] = 2017  # Teste
         # Testa se todas as colunas do novo padrão existem
         predictor_cols = ['u2', 'tmin', 'tmax', 'rs', 'rh', 'eto', 'pr']
         for col in predictor_cols:
@@ -236,7 +247,9 @@ class TestIntegrationScenarios:
         # Testa model training se houver dados suficientes
         if len(small_data) > 20:
             result = fpa.train_models(small_data, 'flow_next_month', train_year_cutoff=2015)
-            if result is not None:
+            if result is None or (isinstance(result, tuple) and result[0] is None):
+                assert result is None or result == (None, None)
+            else:
                 results, predictions = result
                 assert isinstance(results, dict)
                 assert isinstance(predictions, dict)

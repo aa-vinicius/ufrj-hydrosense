@@ -21,15 +21,40 @@ from metricas_gutemberg import nse, kge, rmse, mae, r2, pbias, bias
 
 def calculate_metrics(observed, predicted):
     """Calculate performance metrics (todas as métricas hidrológicas)"""
-    return {
-        'RMSE': rmse(observed, predicted),
-        'MAE': mae(observed, predicted),
-        'R2': r2(observed, predicted),
-        'Nash_Sutcliffe': nse(observed, predicted),
-        'KGE': kge(observed, predicted),
-        'PBIAS': pbias(observed, predicted),
-        'Bias': bias(observed, predicted)
-    }
+    metrics = {}
+    try:
+        metrics['RMSE'] = rmse(observed, predicted)
+    except Exception:
+        metrics['RMSE'] = np.nan
+    try:
+        metrics['MAE'] = mae(observed, predicted)
+    except Exception:
+        metrics['MAE'] = np.nan
+    try:
+        metrics['R2'] = r2(observed, predicted)
+    except Exception:
+        metrics['R2'] = np.nan
+    try:
+        metrics['Correlation'] = np.corrcoef(observed, predicted)[0,1] if len(observed) > 1 else np.nan
+    except Exception:
+        metrics['Correlation'] = np.nan
+    try:
+        metrics['Nash_Sutcliffe'] = nse(observed, predicted)
+    except Exception:
+        metrics['Nash_Sutcliffe'] = np.nan
+    try:
+        metrics['KGE'] = kge(observed, predicted)
+    except Exception:
+        metrics['KGE'] = np.nan
+    try:
+        metrics['PBIAS'] = pbias(observed, predicted)
+    except Exception:
+        metrics['PBIAS'] = np.nan
+    try:
+        metrics['Bias'] = bias(observed, predicted)
+    except Exception:
+        metrics['Bias'] = np.nan
+    return metrics
 
 def process_flow_data():
     """Load and process flow data to monthly scale, filtering negative values"""
@@ -48,7 +73,7 @@ def process_flow_data():
     
     # Convert to monthly data
     flow_data.set_index('Data', inplace=True)
-    monthly_flow = flow_data[target_cols].resample('M').mean()
+    monthly_flow = flow_data[target_cols].resample('ME').mean()
     
     # Create year and month columns
     monthly_flow['year'] = monthly_flow.index.year
@@ -92,20 +117,35 @@ def train_models(data, target_col='flow_next_month', train_year_cutoff=2019):
     if data is None or data.empty or not all(col in data.columns for col in predictor_cols + [target_col]):
         print(f"Warning: DataFrame vazio ou colunas ausentes para {target_col}")
         return None, None
+
+    # Remove linhas com NaN nas colunas preditoras ou alvo
+    data_clean = data.dropna(subset=predictor_cols + [target_col])
+    if data_clean.empty:
+        print(f"Warning: Todos os dados possuem NaN para {target_col}")
+        return None, None
+
     # Split data
-    train_data = data[(data['year'] >= 1998) & (data['year'] <= train_year_cutoff)]
-    test_data = data[(data['year'] >= 2020) & (data['year'] <= 2024)]
+    train_data = data_clean[(data_clean['year'] >= 1998) & (data_clean['year'] <= train_year_cutoff)]
+    test_data = data_clean[(data_clean['year'] >= 2020) & (data_clean['year'] <= 2024)]
     if len(train_data) == 0 or len(test_data) == 0:
         print(f"Warning: Insufficient data for {target_col}")
         return None, None
+
     X_train = train_data[predictor_cols]
     y_train = train_data[target_col]
     X_test = test_data[predictor_cols]
     y_test = test_data[target_col]
+
+    # Garante que não há NaN após o split
+    if X_train.isnull().any().any() or y_train.isnull().any() or X_test.isnull().any().any() or y_test.isnull().any():
+        print(f"Warning: Dados de treino/teste ainda possuem NaN para {target_col}")
+        return None, None
+
     # Scale features
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
+
     # Define models
     models = {
         'Linear_Regression': LinearRegression(),

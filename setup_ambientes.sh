@@ -1,6 +1,10 @@
 #!/bin/bash
 # Script para criar e ativar ambientes virtuais para testes e produção
 
+sudo apt-get update && sudo apt-get install -y python3 python3-pip
+
+sudo apt-get install -y python3-venv
+
 set -e
 
 # Ambiente de testes (mock)

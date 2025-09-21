@@ -94,7 +94,7 @@ class TestPlotCreation:
     def test_plot_components(self, mock_savefig):
         """Test individual plot components."""
         # Create sample data
-        dates = pd.date_range('2016-01-01', periods=5, freq='M')
+        dates = pd.date_range('2016-01-01', periods=5, freq='ME')
         observed = np.array([10, 12, 14, 16, 18])
         model1_pred = np.array([10.5, 11.8, 13.5, 15.8, 17.2])
         corrected_pred = np.array([10.2, 11.9, 13.8, 15.5, 17.5])
@@ -311,10 +311,9 @@ class TestDataHandling:
     def test_data_array_lengths(self):
         """Test handling of arrays with different lengths."""
         # Test data with consistent lengths
-        dates = pd.date_range('2016-01-01', periods=5, freq='M')
+        dates = pd.date_range('2016-01-01', periods=5, freq='ME')
         observed = np.array([10, 12, 14, 16, 18])
         predicted = np.array([10.5, 11.8, 13.5, 15.8, 17.2])
-        
         # All should have same length
         assert len(dates) == len(observed)
         assert len(observed) == len(predicted)

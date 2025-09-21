@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 def sample_meteorological_data():
     """Create sample meteorological data for testing (novo padrão)."""
     np.random.seed(42)
-    dates = pd.date_range('2010-01-01', '2020-12-31', freq='M')
+    dates = pd.date_range('2010-01-01', '2020-12-31', freq='ME')
     n_records = len(dates) * 2  # Duas sub-bacias
     data = {
         'year': np.repeat([d.year for d in dates], 2),
@@ -59,7 +59,7 @@ def sample_monthly_flow_data():
     """Create sample monthly flow data for testing."""
     np.random.seed(42)
     
-    dates = pd.date_range('2010-01-31', '2020-12-31', freq='M')
+    dates = pd.date_range('2010-01-31', '2020-12-31', freq='ME')
     
     data = {
         'Data': dates,
@@ -75,7 +75,7 @@ def sample_monthly_flow_data():
 def sample_merged_data():
     """Create sample merged dataset for testing (novo padrão)."""
     np.random.seed(42)
-    n_records = 100
+    n_records = 200
     subbasins = np.random.choice([24, 36], n_records)
     station_ids = [58030000 if sb == 24 else 58060000 for sb in subbasins]
     data = {

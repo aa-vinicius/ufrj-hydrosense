@@ -22,20 +22,20 @@ class TestErrorModelTraining:
     
     def test_train_error_models_basic(self, sample_merged_data, sample_predictions):
         """Test basic error model training (novo padrão)."""
-        sample_merged_data['year'] = np.concatenate([
+        # Garante que sample_merged_data tenha 100 linhas para compatibilidade
+        df = sample_merged_data.copy().iloc[:100].reset_index(drop=True)
+        df['year'] = np.concatenate([
             np.full(60, 2014),  # Treino
             np.full(40, 2017)   # Teste
         ])
         result = m2ep.train_error_models(
-            sample_merged_data,
+            df,
             'flow_next_month',
             sample_predictions,
             train_year_cutoff=2015
         )
         # O resultado pode ser None em edge cases, e isso é esperado
-        # O resultado pode ser None em edge cases, e isso é esperado
         if result is None or result == (None, None):
-            # None ou (None, None) são resultados esperados para dados inconsistentes
             assert result is None or result == (None, None)
         else:
             results, predictions = result
@@ -78,12 +78,14 @@ class TestErrorModelTraining:
     
     def test_train_error_models_missing_model1_predictions(self, sample_merged_data):
         """Test error model training when Model 1 predictions are missing (novo padrão)."""
-        sample_merged_data['year'] = np.concatenate([
+        # Garante que sample_merged_data tenha 100 linhas para compatibilidade
+        df = sample_merged_data.copy().iloc[:100].reset_index(drop=True)
+        df['year'] = np.concatenate([
             np.full(60, 2014),
             np.full(40, 2017)
         ])
         empty_predictions = {}
-        result = m2ep.train_error_models(sample_merged_data, 'flow_next_month', empty_predictions)
+        result = m2ep.train_error_models(df, 'flow_next_month', empty_predictions)
         assert result is None or result == (None, None)
     
     def test_train_error_models_edge_cases(self):

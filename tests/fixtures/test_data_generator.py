@@ -18,7 +18,7 @@ class TestDataGenerator:
     
     def generate_meteo_vazao_csv(self, filepath, start_year=2010, end_year=2020, subbasins=[24, 36]):
         """Gera CSV no novo formato para o pipeline revisado."""
-        dates = pd.date_range(f'{start_year}-01-01', f'{end_year}-12-31', freq='M')
+        dates = pd.date_range(f'{start_year}-01-01', f'{end_year}-12-31', freq='ME')
         data = []
         for date in dates:
             for subbasin in subbasins:
@@ -90,32 +90,40 @@ class TestDataGenerator:
         
         return df
     
-    def generate_small_dataset(self, n_records=300):
-        """Gera um DataFrame no novo formato do pipeline revisado, cobrindo 1998-2024 e incluindo coluna 'Data'."""
+    def generate_small_dataset(self, n_records=400):
+        """Gera um DataFrame no novo formato do pipeline revisado.
+        Respeita o parâmetro n_records e garante que existem registros para ambas as estações.
+        """
         np.random.seed(self.seed)
-        years = np.random.choice(np.arange(1998, 2025), n_records)
-        months = np.random.randint(1, 13, n_records)
-        subbasins = np.random.choice([24, 36], n_records)
-        station_ids = [58030000 if sb == 24 else 58060000 for sb in subbasins]
-        # Cria datas coerentes para a coluna 'Data'
+        n = int(n_records)
+        if n <= 0:
+            return pd.DataFrame()
+
+        # Ensure at least one sample per station
+        half = n // 2
+        station_ids = [58030000] * half + [58060000] * (n - half)
+        subbasins = [24] * half + [36] * (n - half)
+        years = np.random.choice(np.arange(1998, 2025), n)
+        months = np.random.randint(1, 13, n)
         datas = [pd.Timestamp(year=int(y), month=int(m), day=1) for y, m in zip(years, months)]
         data = {
             'Data': datas,
             'year': years,
             'month': months,
             'subbasin_id': subbasins,
-            'u2': np.random.uniform(1.5, 2.5, n_records),
-            'tmin': np.random.uniform(15.0, 25.0, n_records),
-            'tmax': np.random.uniform(25.0, 35.0, n_records),
-            'rs': np.random.uniform(15.0, 25.0, n_records),
-            'rh': np.random.uniform(60.0, 90.0, n_records),
-            'eto': np.random.uniform(3.0, 7.0, n_records),
-            'pr': np.random.uniform(0.0, 200.0, n_records),
+            'u2': np.random.uniform(1.5, 2.5, n),
+            'tmin': np.random.uniform(15.0, 25.0, n),
+            'tmax': np.random.uniform(25.0, 35.0, n),
+            'rs': np.random.uniform(15.0, 25.0, n),
+            'rh': np.random.uniform(60.0, 90.0, n),
+            'eto': np.random.uniform(3.0, 7.0, n),
+            'pr': np.random.uniform(0.0, 200.0, n),
             'station_id': station_ids,
-            # Garante que não há NaN por padrão
-            'flow_next_month': np.random.uniform(8.0, 15.0, n_records)
+            'flow_next_month': np.random.uniform(8.0, 15.0, n)
         }
         df = pd.DataFrame(data)
+        # Garante que não há NaN em flow_next_month
+        df['flow_next_month'] = df['flow_next_month'].fillna(10.0)
         # Adiciona colunas 58030000 e 58060000 para compatibilidade com testes antigos
         df[58030000] = np.where(df['station_id'] == 58030000, df['flow_next_month'], np.nan)
         df[58060000] = np.where(df['station_id'] == 58060000, df['flow_next_month'], np.nan)
@@ -160,7 +168,9 @@ class TestDataGenerator:
         return {
             'empty': empty_df,
             'single': single_record,
+            'single_record': single_record,  # compatibilidade com testes
             'missing': missing_data,
+            'missing_values': missing_data,  # compatibilidade com testes
             'extreme_values': extreme_data
         }
 
@@ -172,7 +182,7 @@ def create_test_files(temp_dir):
     met_file = data_dir / 'meteo_vazao_shifted_station_58030000.csv'
     met_data = generator.generate_meteo_vazao_csv(met_file)
     # Gerar flow_data como DataFrame (não arquivo Excel, para facilitar o mock)
-    flow_data = generator.generate_small_dataset(200)
+    flow_data = generator.generate_small_dataset(400)
     return {
         'met_file': met_file,
         'met_data': met_data,
