@@ -41,3 +41,6 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Data
+data/meteo_vazao_shifted_station_58030000.csv
