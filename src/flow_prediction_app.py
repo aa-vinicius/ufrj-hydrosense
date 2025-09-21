@@ -86,15 +86,15 @@ def merge_data(flow_data, met_data):
         print(f"Dataset para estação {station_id}: {merged.shape}")
     return merged_datasets
 
-def train_models(data, target_col='flow_next_month', train_year_cutoff=2015):
+def train_models(data, target_col='flow_next_month', train_year_cutoff=2019):
     """Treina múltiplos modelos de ML com a nova estrutura de dados"""
     predictor_cols = ['year', 'month', 'u2', 'tmin', 'tmax', 'rs', 'rh', 'eto', 'pr']
     if data is None or data.empty or not all(col in data.columns for col in predictor_cols + [target_col]):
         print(f"Warning: DataFrame vazio ou colunas ausentes para {target_col}")
         return None, None
     # Split data
-    train_data = data[data['year'] <= train_year_cutoff]
-    test_data = data[data['year'] > train_year_cutoff]
+    train_data = data[(data['year'] >= 1998) & (data['year'] <= train_year_cutoff)]
+    test_data = data[(data['year'] >= 2020) & (data['year'] <= 2024)]
     if len(train_data) == 0 or len(test_data) == 0:
         print(f"Warning: Insufficient data for {target_col}")
         return None, None

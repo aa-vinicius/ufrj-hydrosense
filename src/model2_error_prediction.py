@@ -9,15 +9,15 @@ from flow_prediction_app import calculate_metrics, train_models, main
 import warnings
 warnings.filterwarnings('ignore')
 
-def train_error_models(data, target_col, model1_predictions, train_year_cutoff=2015):
+def train_error_models(data, target_col, model1_predictions, train_year_cutoff=2019):
     """Treina modelos para prever os erros do Modelo 1 usando a nova estrutura de dados"""
     predictor_cols = ['year', 'month', 'u2', 'tmin', 'tmax', 'rs', 'rh', 'eto', 'pr']
     if data is None or data.empty or not all(col in data.columns for col in predictor_cols):
         print(f"Warning: DataFrame vazio ou colunas ausentes para {target_col}")
         return None, None
     # Split data
-    train_data = data[data['year'] <= train_year_cutoff]
-    test_data = data[data['year'] > train_year_cutoff]
+    train_data = data[(data['year'] >= 1998) & (data['year'] <= train_year_cutoff)]
+    test_data = data[(data['year'] >= 2020) & (data['year'] <= 2024)]
     if len(train_data) == 0 or len(test_data) == 0:
         print(f"Warning: Insufficient data for {target_col}")
         return None, None
