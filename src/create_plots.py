@@ -3,10 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 from model2_error_prediction import main_model2
+import os
 
 def create_time_series_plots():
     """Create time series plots with confidence intervals"""
     print("Creating time series plots with confidence intervals...")
+    # Garante que a pasta outputs existe
+    os.makedirs('../outputs', exist_ok=True)
     
     # Get all results
     model1_results, model1_preds, model2_results, model2_preds, ci, datasets = main_model2()

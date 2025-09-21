@@ -149,7 +149,7 @@ def main():
     print("=" * 50)
     # Carrega dados já no novo formato
     met_data = load_meteorological_data()
-    merged_datasets = merge_data(met_data)
+    merged_datasets = merge_data(met_data, met_data)
     # Treina modelos para cada estação
     all_results = {}
     all_predictions = {}

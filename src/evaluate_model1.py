@@ -49,8 +49,11 @@ def save_model1_results():
             model1_results.append(test_row)
     
     # Convert to DataFrame and save
+    import os
+    output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../outputs'))
+    os.makedirs(output_dir, exist_ok=True)
     model1_df = pd.DataFrame(model1_results)
-    model1_df.to_csv('../outputs/model1_performance_metrics.csv', index=False)
+    model1_df.to_csv(os.path.join(output_dir, 'model1_performance_metrics.csv'), index=False)
     
     print("Model 1 results saved to 'model1_performance_metrics.csv'")
     print("\nModel 1 Performance Summary:")

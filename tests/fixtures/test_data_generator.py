@@ -24,6 +24,10 @@ class TestDataGenerator:
             for subbasin in subbasins:
                 station_id = 58030000 if subbasin == 24 else 58060000
                 seasonal_factor = np.sin(2 * np.pi * date.month / 12)
+                flow_value = 10 + 2 * seasonal_factor + np.random.normal(0, 1)
+                # Garante que não há NaN em flow_next_month
+                if np.isnan(flow_value):
+                    flow_value = 10.0
                 record = {
                     'year': date.year,
                     'month': date.month,
@@ -36,10 +40,13 @@ class TestDataGenerator:
                     'eto': 5 + 2 * seasonal_factor + np.random.normal(0, 0.5),
                     'pr': max(0, 100 + 50 * seasonal_factor + np.random.normal(0, 30)),
                     'station_id': station_id,
-                    'flow_next_month': 10 + 2 * seasonal_factor + np.random.normal(0, 1)
+                    'flow_next_month': flow_value
                 }
                 data.append(record)
         df = pd.DataFrame(data)
+        # Reforça: se ainda houver algum NaN, preenche com 10.0
+        if df['flow_next_month'].isna().any():
+            df['flow_next_month'] = df['flow_next_month'].fillna(10.0)
         df.to_csv(filepath, index=False)
         return df
     
@@ -83,14 +90,19 @@ class TestDataGenerator:
         
         return df
     
-    def generate_small_dataset(self, n_records=50):
-        """Gera um pequeno DataFrame no novo formato do pipeline revisado."""
+    def generate_small_dataset(self, n_records=300):
+        """Gera um DataFrame no novo formato do pipeline revisado, cobrindo 1998-2024 e incluindo coluna 'Data'."""
         np.random.seed(self.seed)
+        years = np.random.choice(np.arange(1998, 2025), n_records)
+        months = np.random.randint(1, 13, n_records)
         subbasins = np.random.choice([24, 36], n_records)
         station_ids = [58030000 if sb == 24 else 58060000 for sb in subbasins]
+        # Cria datas coerentes para a coluna 'Data'
+        datas = [pd.Timestamp(year=int(y), month=int(m), day=1) for y, m in zip(years, months)]
         data = {
-            'year': np.random.randint(2015, 2021, n_records),
-            'month': np.random.randint(1, 13, n_records),
+            'Data': datas,
+            'year': years,
+            'month': months,
             'subbasin_id': subbasins,
             'u2': np.random.uniform(1.5, 2.5, n_records),
             'tmin': np.random.uniform(15.0, 25.0, n_records),
@@ -100,10 +112,15 @@ class TestDataGenerator:
             'eto': np.random.uniform(3.0, 7.0, n_records),
             'pr': np.random.uniform(0.0, 200.0, n_records),
             'station_id': station_ids,
+            # Garante que não há NaN por padrão
             'flow_next_month': np.random.uniform(8.0, 15.0, n_records)
         }
-        return pd.DataFrame(data)
-    
+        df = pd.DataFrame(data)
+        # Adiciona colunas 58030000 e 58060000 para compatibilidade com testes antigos
+        df[58030000] = np.where(df['station_id'] == 58030000, df['flow_next_month'], np.nan)
+        df[58060000] = np.where(df['station_id'] == 58060000, df['flow_next_month'], np.nan)
+        return df
+
     def generate_edge_case_data(self):
         """Gera DataFrames de casos extremos no novo formato do pipeline revisado."""
         # Empty dataset
@@ -124,19 +141,26 @@ class TestDataGenerator:
             'station_id': [58030000],
             'flow_next_month': [10.0]
         })
-        # Dataset with missing values
-        missing_data = self.generate_small_dataset(20)
+        # Dataset with missing values (único com NaN em flow_next_month)
+        missing_data = self.generate_small_dataset(40)
         missing_data.loc[0:5, 'u2'] = np.nan
         missing_data.loc[10:15, 'flow_next_month'] = np.nan
-        # Dataset with extreme values
-        extreme_data = self.generate_small_dataset(20)
+        # Dataset with extreme values (NÃO deve ter NaN em flow_next_month)
+        extreme_data = self.generate_small_dataset(100)
         extreme_data.loc[0, 'pr'] = 1000.0  # Precipitação extrema
         extreme_data.loc[1, 'tmin'] = -10.0  # Temperatura extrema
         extreme_data.loc[2, 'flow_next_month'] = 100.0  # Vazão extrema
+        # Garante que não há NaN em flow_next_month
+        extreme_data['flow_next_month'] = extreme_data['flow_next_month'].fillna(10.0)
+        extreme_data = extreme_data.dropna(subset=['flow_next_month'])
+        # Reforça limpeza de NaN em todos os DataFrames, exceto 'missing'
+        empty_df = empty_df.dropna(subset=['flow_next_month'])
+        single_record = single_record.dropna(subset=['flow_next_month'])
+        extreme_data = extreme_data.dropna(subset=['flow_next_month'])
         return {
             'empty': empty_df,
-            'single_record': single_record,
-            'missing_values': missing_data,
+            'single': single_record,
+            'missing': missing_data,
             'extreme_values': extreme_data
         }
 
@@ -147,7 +171,10 @@ def create_test_files(temp_dir):
     data_dir.mkdir(exist_ok=True)
     met_file = data_dir / 'meteo_vazao_shifted_station_58030000.csv'
     met_data = generator.generate_meteo_vazao_csv(met_file)
+    # Gerar flow_data como DataFrame (não arquivo Excel, para facilitar o mock)
+    flow_data = generator.generate_small_dataset(200)
     return {
         'met_file': met_file,
-        'met_data': met_data
+        'met_data': met_data,
+        'flow_data': flow_data
     }

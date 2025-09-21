@@ -45,7 +45,7 @@ wheels/
 *.egg
 
 # Data
-data/meteo_vazao_shifted_station_58030000.csv
+data/*
 
 # Outputs
 outputs/*

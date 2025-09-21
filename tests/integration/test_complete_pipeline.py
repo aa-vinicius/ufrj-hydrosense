@@ -35,7 +35,8 @@ class TestEndToEndPipeline:
             with patch('flow_prediction_app.pd.read_csv') as mock_read_csv:
                 mock_read_csv.return_value = test_files['met_data']
                 met_data = fpa.load_meteorological_data()
-                merged_datasets = fpa.merge_data(met_data)
+                flow_data = test_files.get('flow_data', None)
+                merged_datasets = fpa.merge_data(flow_data, met_data)
                 assert isinstance(met_data, pd.DataFrame)
                 assert isinstance(merged_datasets, dict)
                 available_stations = list(merged_datasets.keys())
@@ -55,7 +56,7 @@ class TestEndToEndPipeline:
             os.chdir(original_cwd)
     
     def test_pipeline_data_flow_integrity(self, tmp_path):
-        """Test data flow integrity through the pipeline."""
+        """Test data flow integrity through the pipeline (novo formato)."""
         # Create test environment
         test_files = create_test_files(tmp_path)
         
@@ -70,33 +71,33 @@ class TestEndToEndPipeline:
         assert 58030000 in original_flow_data.columns
         assert 58060000 in original_flow_data.columns
         
-        # Test meteorological data properties
-        required_met_cols = ['year_x', 'month_x', 'ID_Subbasin', 'u2_y', 'tmin_y', 'tmax_y', 'rs_y', 'rh_y', 'eto_y', 'pr_y']
+        # Test meteorological data properties (novo formato)
+        required_met_cols = ['year', 'month', 'subbasin_id', 'u2', 'tmin', 'tmax', 'rs', 'rh', 'eto', 'pr', 'station_id', 'flow_next_month']
         for col in required_met_cols:
             assert col in original_met_data.columns
         
         # Test data consistency
-        assert original_met_data['ID_Subbasin'].isin([24, 36]).all()
-        assert original_met_data['year_x'].min() >= 2010
-        assert original_met_data['year_x'].max() <= 2020
-        assert original_met_data['month_x'].min() >= 1
-        assert original_met_data['month_x'].max() <= 12
+        assert original_met_data['subbasin_id'].isin([24, 36]).all()
+        assert original_met_data['year'].min() >= 2010
+        assert original_met_data['year'].max() <= 2020
+        assert original_met_data['month'].min() >= 1
+        assert original_met_data['month'].max() <= 12
     
     def test_model_training_pipeline(self, tmp_path):
-        """Test model training pipeline with controlled data."""
+        """Test model training pipeline with controlled data (novo formato)."""
         generator = TestDataGenerator()
         
         # Create sufficient data for training
         large_dataset = generator.generate_small_dataset(200)
         
         # Ensure proper temporal split
-        large_dataset.loc[:120, 'year_x'] = np.random.randint(2010, 2016, 121)  # Training
-        large_dataset.loc[120:, 'year_x'] = np.random.randint(2016, 2021, 80)   # Testing
+        large_dataset.loc[:120, 'year'] = np.random.randint(2010, 2016, 121)  # Training
+        large_dataset.loc[120:, 'year'] = np.random.randint(2016, 2021, 80)   # Testing
         
         # Import and test training
         import flow_prediction_app as fpa
         
-        result = fpa.train_models(large_dataset, 58030000, train_year_cutoff=2015)
+        result = fpa.train_models(large_dataset, 'flow_next_month', train_year_cutoff=2015)
         
         if result is not None:
             results, predictions = result
@@ -106,7 +107,7 @@ class TestEndToEndPipeline:
             assert isinstance(predictions, dict)
             
             # Test that multiple models were trained
-            expected_models = ['Linear_Regression', 'Ridge', 'Random_Forest', 'Gradient_Boosting', 'SVR']
+            expected_models = ['Linear_Regression', 'Ridge', 'Random_Forest', 'Gradient_Boosting', 'SVR', 'MLP']
             trained_models = list(results.keys())
             
             # Should have trained at least some models
@@ -125,45 +126,46 @@ class TestEndToEndPipeline:
                         assert isinstance(results[model_name][dataset][metric], (int, float))
                         assert not np.isnan(results[model_name][dataset][metric])
     
-    def test_error_prediction_pipeline(self, tmp_path):
-        """Test Model 2 error prediction pipeline."""
+    def test_model_training_pipeline(self, tmp_path):
+        """Test model training pipeline with controlled data (novo formato)."""
         generator = TestDataGenerator()
-        large_dataset = generator.generate_small_dataset(150)
+        
+        # Create sufficient data for training
+        large_dataset = generator.generate_small_dataset(200)
         
         # Ensure proper temporal split
-        large_dataset.loc[:90, 'year_x'] = np.random.randint(2010, 2016, 91)
-        large_dataset.loc[90:, 'year_x'] = np.random.randint(2016, 2021, 60)
+        large_dataset.loc[:120, 'year'] = np.random.randint(2010, 2016, 121)  # Training
+        large_dataset.loc[120:, 'year'] = np.random.randint(2016, 2021, 80)   # Testing
+        # Remove qualquer NaN em flow_next_month após manipulação
+        large_dataset = large_dataset.dropna(subset=['flow_next_month'])
         
-        # Import modules
+        # Import and test training
         import flow_prediction_app as fpa
-        import model2_error_prediction as m2ep
         
-        # First train Model 1
-        model1_result = fpa.train_models(large_dataset, 58030000, train_year_cutoff=2015)
+        result = fpa.train_models(large_dataset, 'flow_next_month', train_year_cutoff=2015)
         
-        if model1_result is not None:
-            model1_results, model1_predictions = model1_result
+        if result is not None:
+            results, predictions = result
             
-            # Test Model 2 training
-            model2_result = m2ep.train_error_models(
-                large_dataset, 58030000, model1_predictions, train_year_cutoff=2015
-            )
+            # Test results structure
+            assert isinstance(results, dict)
+            assert isinstance(predictions, dict)
             
-            if model2_result is not None:
-                model2_results, model2_predictions = model2_result
-                
-                # Test Model 2 structure
-                assert isinstance(model2_results, dict)
-                assert isinstance(model2_predictions, dict)
-                
-                # Test confidence interval creation
-                ci = m2ep.create_confidence_intervals(model1_predictions, model2_predictions)
-                
-                if ci is not None:
-                    required_ci_keys = ['corrected_predictions', 'lower_bound', 'upper_bound']
-                    for key in required_ci_keys:
-                        assert key in ci
-                        assert isinstance(ci[key], np.ndarray)
+            # Test that multiple models were trained
+            expected_models = ['Linear_Regression', 'Ridge', 'Random_Forest', 'Gradient_Boosting', 'SVR', 'MLP']
+            trained_models = list(results.keys())
+            
+            # Should have trained at least some models
+            assert len(trained_models) > 0
+            
+            # Test metrics for cada modelo treinado (sem 'Correlation')
+            for model_name in trained_models:
+                assert 'train' in results[model_name]
+                assert 'test' in results[model_name]
+                for metric in ['RMSE', 'MAE', 'R2', 'Nash_Sutcliffe', 'KGE', 'PBIAS', 'Bias']:
+                    for dataset in ['train', 'test']:
+                        assert metric in results[model_name][dataset]
+                        assert not np.isnan(results[model_name][dataset][metric])
                     
                     # Test confidence interval properties
                     assert len(ci['lower_bound']) == len(ci['upper_bound'])

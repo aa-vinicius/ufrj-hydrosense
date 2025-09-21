@@ -9,6 +9,7 @@ It executes all models and generates outputs in the proper directory structure.
 import sys
 import os
 import subprocess
+from pathlib import Path
 
 def run_script(script_path, description):
     """Run a Python script and handle errors"""
@@ -18,10 +19,13 @@ def run_script(script_path, description):
     
     try:
         # Change to src directory to run the script
-        result = subprocess.run([sys.executable, script_path], 
-                              cwd='src', 
-                              capture_output=False, 
-                              text=True)
+        venv_python = Path('.venv-prod/bin/python').resolve()
+        if not venv_python.exists():
+            raise RuntimeError("Python do ambiente .venv-prod não encontrado. Rode setup_ambientes.sh.")
+        result = subprocess.run([str(venv_python), script_path],
+                                cwd='src',
+                                capture_output=False,
+                                text=True)
         
         if result.returncode == 0:
             print(f"✅ {description} completed successfully")

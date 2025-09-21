@@ -49,8 +49,11 @@ def save_model2_results():
             model2_results_list.append(test_row)
     
     # Convert to DataFrame and save
+    import os
+    output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../outputs'))
+    os.makedirs(output_dir, exist_ok=True)
     model2_df = pd.DataFrame(model2_results_list)
-    model2_df.to_csv('../outputs/model2_error_prediction_metrics.csv', index=False)
+    model2_df.to_csv(os.path.join(output_dir, 'model2_error_prediction_metrics.csv'), index=False)
     
     print("Model 2 results saved to 'model2_error_prediction_metrics.csv'")
     print("\nModel 2 Performance Summary:")

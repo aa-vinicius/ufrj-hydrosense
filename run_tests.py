@@ -11,6 +11,21 @@ import os
 import subprocess
 import argparse
 from pathlib import Path
+def ensure_venv_test():
+    """Reinvoca o script com o Python do .venv-test se necessário."""
+    # Caminho absoluto do projeto (onde está este script)
+    project_root = Path(__file__).parent.absolute()
+    venv_python = project_root.joinpath('.venv-test', 'bin', 'python')
+    venv_python_abs = venv_python.resolve()
+    # Se já está rodando no venv-test, não faz nada
+    if Path(sys.executable).resolve() == venv_python_abs:
+        return
+    # Se não está, reinvoca
+    if not venv_python_abs.exists():
+        print(f"❌ Python do ambiente .venv-test não encontrado em {venv_python_abs}. Rode setup_ambientes.sh.")
+        sys.exit(1)
+    print(f"🔄 Reinvocando no ambiente de testes: {venv_python_abs}")
+    os.execv(str(venv_python_abs), [str(venv_python_abs)] + sys.argv)
 
 def run_command(command, description):
     """Run a command and handle errors."""
@@ -18,19 +33,22 @@ def run_command(command, description):
     print(f"Running: {description}")
     print(f"Command: {' '.join(command)}")
     print(f"{'='*60}")
-    
     try:
+        venv_python = Path('.venv-test/bin/python').resolve()
+        if not venv_python.exists():
+            raise RuntimeError("Python do ambiente .venv-test não encontrado. Rode setup_ambientes.sh.")
+        # Se o comando começa com sys.executable, substitui pelo python do venv-test
+        if command[0] == sys.executable or command[0].endswith('python'):
+            command = [str(venv_python)] + command[1:]
         result = subprocess.run(command, capture_output=False, text=True)
-        
         if result.returncode == 0:
-            print(f"✅ {description} completed successfully")
+            print(f"\u2705 {description} completed successfully")
             return True
         else:
-            print(f"❌ {description} failed with return code {result.returncode}")
+            print(f"\u274c {description} failed with return code {result.returncode}")
             return False
-            
     except Exception as e:
-        print(f"❌ Error running {description}: {str(e)}")
+        print(f"\u274c Error running {description}: {str(e)}")
         return False
 
 def check_dependencies():
@@ -58,12 +76,18 @@ def check_dependencies():
 
 def run_unit_tests():
     """Run unit tests."""
-    command = [sys.executable, '-m', 'pytest', 'tests/unit/', '-v', '--tb=short']
+    project_root = Path(__file__).parent.absolute()
+    venv_python = project_root.joinpath('.venv-test', 'bin', 'python').resolve()
+    pytest_bin = project_root.joinpath('.venv-test', 'bin', 'pytest').resolve()
+    command = [str(pytest_bin), 'tests/unit/', '-v', '--tb=short']
     return run_command(command, "Unit Tests")
 
 def run_integration_tests():
     """Run integration tests."""
-    command = [sys.executable, '-m', 'pytest', 'tests/integration/', '-v', '--tb=short']
+    project_root = Path(__file__).parent.absolute()
+    venv_python = project_root.joinpath('.venv-test', 'bin', 'python').resolve()
+    pytest_bin = project_root.joinpath('.venv-test', 'bin', 'pytest').resolve()
+    command = [str(pytest_bin), 'tests/integration/', '-v', '--tb=short']
     return run_command(command, "Integration Tests")
 
 def run_specific_test_category(category):
@@ -83,12 +107,18 @@ def run_specific_test_category(category):
         print(f"Available categories: {', '.join(category_map.keys())}")
         return False
     
-    command = [sys.executable, '-m', 'pytest', 'tests/', '-v'] + category_map[category]
+    project_root = Path(__file__).parent.absolute()
+    venv_python = project_root.joinpath('.venv-test', 'bin', 'python').resolve()
+    pytest_bin = project_root.joinpath('.venv-test', 'bin', 'pytest').resolve()
+    command = [str(pytest_bin), 'tests/', '-v'] + category_map[category]
     return run_command(command, f"Tests for category: {category}")
 
 def run_all_tests():
     """Run all tests."""
-    command = [sys.executable, '-m', 'pytest', 'tests/', '-v', '--tb=short']
+    project_root = Path(__file__).parent.absolute()
+    venv_python = project_root.joinpath('.venv-test', 'bin', 'python').resolve()
+    pytest_bin = project_root.joinpath('.venv-test', 'bin', 'pytest').resolve()
+    command = [str(pytest_bin), 'tests/', '-v', '--tb=short']
     return run_command(command, "All Tests")
 
 def run_tests_with_coverage():
@@ -109,8 +139,11 @@ def run_tests_with_coverage():
             coverage_available = True
     
     if coverage_available:
+        project_root = Path(__file__).parent.absolute()
+        venv_python = project_root.joinpath('.venv-test', 'bin', 'python').resolve()
+        pytest_bin = project_root.joinpath('.venv-test', 'bin', 'pytest').resolve()
         command = [
-            sys.executable, '-m', 'pytest', 'tests/', '-v',
+            str(pytest_bin), 'tests/', '-v',
             '--cov=src', '--cov-report=html', '--cov-report=term-missing',
             '--cov-report=xml'
         ]
@@ -128,8 +161,11 @@ def run_tests_with_coverage():
 
 def run_performance_tests():
     """Run performance-focused tests."""
+    project_root = Path(__file__).parent.absolute()
+    venv_python = project_root.joinpath('.venv-test', 'bin', 'python').resolve()
+    pytest_bin = project_root.joinpath('.venv-test', 'bin', 'pytest').resolve()
     command = [
-        sys.executable, '-m', 'pytest', 'tests/', '-v',
+        str(pytest_bin), 'tests/', '-v',
         '-k', 'performance or scalability or memory',
         '--durations=0'
     ]
@@ -282,6 +318,7 @@ Examples:
         return 1
 
 if __name__ == "__main__":
+    ensure_venv_test()
     exit_code = main()
     sys.exit(exit_code)
     
