@@ -3,59 +3,47 @@ import numpy as np
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.svm import SVR
+from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
 from flow_prediction_app import calculate_metrics, train_models, main
 import warnings
 warnings.filterwarnings('ignore')
 
 def train_error_models(data, target_col, model1_predictions, train_year_cutoff=2015):
-    """Train models to predict errors from Model 1"""
-    predictor_cols = ['u2_y', 'tmin_y', 'tmax_y', 'rs_y', 'rh_y', 'eto_y', 'pr_y']
-    
+    """Treina modelos para prever os erros do Modelo 1 usando a nova estrutura de dados"""
+    predictor_cols = ['year', 'month', 'u2', 'tmin', 'tmax', 'rs', 'rh', 'eto', 'pr']
     # Split data
-    train_data = data[data['year_x'] <= train_year_cutoff]
-    test_data = data[data['year_x'] > train_year_cutoff]
-    
+    train_data = data[data['year'] <= train_year_cutoff]
+    test_data = data[data['year'] > train_year_cutoff]
     if len(train_data) == 0 or len(test_data) == 0:
         print(f"Warning: Insufficient data for {target_col}")
-        return None
-    
+        return None, None
     X_train = train_data[predictor_cols]
     X_test = test_data[predictor_cols]
-    
     # Scale features
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
-    
     # Define models
     models = {
         'Linear_Regression': LinearRegression(),
         'Ridge': Ridge(alpha=1.0),
         'Random_Forest': RandomForestRegressor(n_estimators=100, random_state=42),
         'Gradient_Boosting': GradientBoostingRegressor(n_estimators=100, random_state=42),
-        'SVR': SVR(kernel='rbf', C=1.0, gamma='scale')
+        'SVR': SVR(kernel='rbf', C=1.0, gamma='scale'),
+        'MLP': MLPRegressor(hidden_layer_sizes=(100, 50), max_iter=1000, random_state=42)
     }
-    
     results = {}
     predictions = {}
-    
-    # Get the best Model 1 predictions (using Random Forest as it typically performs well)
-    best_model = 'Random_Forest'  # You can change this based on Model 1 results
-    
+    best_model = 'Random_Forest'
     if best_model not in model1_predictions:
         print(f"Warning: {best_model} not found in Model 1 predictions")
-        return None
-    
-    # Calculate errors (residuals) from Model 1
+        return None, None
     train_errors = model1_predictions[best_model]['y_train'].values - model1_predictions[best_model]['train_pred']
     test_errors = model1_predictions[best_model]['y_test'].values - model1_predictions[best_model]['test_pred']
-    
     for model_name, model in models.items():
         print(f"Training {model_name} for error prediction of {target_col}...")
-        
-        # Train model to predict errors
-        if model_name in ['Linear_Regression', 'Ridge', 'SVR']:
+        if model_name in ['Linear_Regression', 'Ridge', 'SVR', 'MLP']:
             model.fit(X_train_scaled, train_errors)
             train_error_pred = model.predict(X_train_scaled)
             test_error_pred = model.predict(X_test_scaled)
@@ -63,25 +51,20 @@ def train_error_models(data, target_col, model1_predictions, train_year_cutoff=2
             model.fit(X_train, train_errors)
             train_error_pred = model.predict(X_train)
             test_error_pred = model.predict(X_test)
-        
-        # Calculate metrics for error prediction
         train_metrics = calculate_metrics(train_errors, train_error_pred)
         test_metrics = calculate_metrics(test_errors, test_error_pred)
-        
         results[model_name] = {
             'train': train_metrics,
             'test': test_metrics
         }
-        
         predictions[model_name] = {
             'train_error_pred': train_error_pred,
             'test_error_pred': test_error_pred,
             'train_errors': train_errors,
             'test_errors': test_errors,
-            'train_dates': train_data[['year_x', 'month_x']],
-            'test_dates': test_data[['year_x', 'month_x']]
+            'train_dates': train_data[['year', 'month']],
+            'test_dates': test_data[['year', 'month']]
         }
-    
     return results, predictions
 
 def create_confidence_intervals(model1_preds, model2_preds, confidence_level=0.95):

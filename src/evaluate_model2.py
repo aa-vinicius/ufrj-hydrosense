@@ -24,8 +24,10 @@ def save_model2_results():
                 'Dataset': 'Training',
                 'RMSE': metrics['train']['RMSE'],
                 'MAE': metrics['train']['MAE'],
-                'Correlation': metrics['train']['Correlation'],
-                'BIAS': metrics['train']['BIAS'],
+                'R2': metrics['train'].get('R2', None),
+                'KGE': metrics['train'].get('KGE', None),
+                'PBIAS': metrics['train'].get('PBIAS', None),
+                'BIAS': metrics['train'].get('BIAS', None),
                 'Nash_Sutcliffe': metrics['train']['Nash_Sutcliffe']
             }
             model2_results_list.append(train_row)
@@ -38,8 +40,10 @@ def save_model2_results():
                 'Dataset': 'Test',
                 'RMSE': metrics['test']['RMSE'],
                 'MAE': metrics['test']['MAE'],
-                'Correlation': metrics['test']['Correlation'],
-                'BIAS': metrics['test']['BIAS'],
+                'R2': metrics['test'].get('R2', None),
+                'KGE': metrics['test'].get('KGE', None),
+                'PBIAS': metrics['test'].get('PBIAS', None),
+                'BIAS': metrics['test'].get('BIAS', None),
                 'Nash_Sutcliffe': metrics['test']['Nash_Sutcliffe']
             }
             model2_results_list.append(test_row)

@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.svm import SVR
+from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
@@ -16,20 +17,17 @@ def nash_sutcliffe_efficiency(observed, predicted):
     denominator = np.sum((observed - mean_observed) ** 2)
     return 1 - (numerator / denominator)
 
+from metricas_gutemberg import nse, kge, rmse, mae, r2, pbias
+
 def calculate_metrics(observed, predicted):
-    """Calculate performance metrics"""
-    rmse = np.sqrt(mean_squared_error(observed, predicted))
-    mae = mean_absolute_error(observed, predicted)
-    correlation = np.corrcoef(observed, predicted)[0, 1]
-    bias = np.mean(predicted - observed)
-    nse = nash_sutcliffe_efficiency(observed, predicted)
-    
+    """Calculate performance metrics (todas as métricas hidrológicas)"""
     return {
-        'RMSE': rmse,
-        'MAE': mae,
-        'Correlation': correlation,
-        'BIAS': bias,
-        'Nash_Sutcliffe': nse
+        'RMSE': rmse(observed, predicted),
+        'MAE': mae(observed, predicted),
+        'R2': r2(observed, predicted),
+        'Nash_Sutcliffe': nse(observed, predicted),
+        'KGE': kge(observed, predicted),
+        'PBIAS': pbias(observed, predicted)
     }
 
 def process_flow_data():
@@ -64,98 +62,58 @@ def process_flow_data():
     return monthly_flow
 
 def load_meteorological_data():
-    """Load meteorological data"""
+    """Carrega os dados meteorológicos já no novo formato"""
     print("Loading meteorological data...")
-    
-    met_data = pd.read_csv('../data/glob-funil-subbasin.csv')
-    
-    # Select relevant columns
-    predictor_cols = ['u2_y', 'tmin_y', 'tmax_y', 'rs_y', 'rh_y', 'eto_y', 'pr_y']
-    time_cols = ['year_x', 'month_x']
-    id_col = ['ID_Subbasin']
-    
-    met_data_clean = met_data[predictor_cols + time_cols + id_col].copy()
-    
-    # Remove rows with NaN in ID_Subbasin
-    met_data_clean = met_data_clean.dropna(subset=['ID_Subbasin'])
-    
+    met_data = pd.read_csv('data/meteo_vazao_shifted_station_58030000.csv')
+    # Não há mais sufixos _x/_y, e as colunas já estão padronizadas
+    predictor_cols = ['year', 'month', 'u2', 'tmin', 'tmax', 'rs', 'rh', 'eto', 'pr']
+    id_col = ['subbasin_id', 'station_id']
+    target_col = ['flow_next_month']
+    met_data_clean = met_data[predictor_cols + id_col + target_col].copy()
     print(f"Meteorological data shape: {met_data_clean.shape}")
-    
     return met_data_clean
 
-def merge_data(monthly_flow, met_data):
-    """Merge meteorological and flow data"""
-    print("Merging datasets...")
-    
-    # Mapping: flow column -> subbasin ID
-    flow_to_subbasin = {
-        58030000: 24,
-        58060000: 36
-    }
-    
+def merge_data(met_data):
+    """Com a nova estrutura, não é necessário merge externo. Apenas filtra por estação/subbacia se necessário."""
+    print("Preparando datasets por estação...")
     merged_datasets = {}
-    
-    for flow_col, subbasin_id in flow_to_subbasin.items():
-        # Filter meteorological data for this subbasin
-        met_subset = met_data[met_data['ID_Subbasin'] == subbasin_id].copy()
-        
-        # Merge on year and month
-        merged = pd.merge(
-            monthly_flow[['year', 'month', flow_col]],
-            met_subset,
-            left_on=['year', 'month'],
-            right_on=['year_x', 'month_x'],
-            how='inner'
-        )
-        
-        # Remove rows with NaN in flow data
-        merged = merged.dropna(subset=[flow_col])
-        
-        merged_datasets[flow_col] = merged
-        
-        print(f"Merged data for {flow_col} (subbasin {subbasin_id}): {merged.shape}")
-    
+    for station_id in met_data['station_id'].unique():
+        merged = met_data[met_data['station_id'] == station_id].copy()
+        merged_datasets[station_id] = merged
+        print(f"Dataset para estação {station_id}: {merged.shape}")
     return merged_datasets
 
-def train_models(data, target_col, train_year_cutoff=2015):
-    """Train multiple ML models"""
-    predictor_cols = ['u2_y', 'tmin_y', 'tmax_y', 'rs_y', 'rh_y', 'eto_y', 'pr_y']
-    
+def train_models(data, target_col='flow_next_month', train_year_cutoff=2015):
+    """Treina múltiplos modelos de ML com a nova estrutura de dados"""
+    predictor_cols = ['year', 'month', 'u2', 'tmin', 'tmax', 'rs', 'rh', 'eto', 'pr']
     # Split data
-    train_data = data[data['year_x'] <= train_year_cutoff]
-    test_data = data[data['year_x'] > train_year_cutoff]
-    
+    train_data = data[data['year'] <= train_year_cutoff]
+    test_data = data[data['year'] > train_year_cutoff]
     if len(train_data) == 0 or len(test_data) == 0:
         print(f"Warning: Insufficient data for {target_col}")
-        return None
-    
+        return None, None
     X_train = train_data[predictor_cols]
     y_train = train_data[target_col]
     X_test = test_data[predictor_cols]
     y_test = test_data[target_col]
-    
     # Scale features
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
-    
     # Define models
     models = {
         'Linear_Regression': LinearRegression(),
         'Ridge': Ridge(alpha=1.0),
         'Random_Forest': RandomForestRegressor(n_estimators=100, random_state=42),
         'Gradient_Boosting': GradientBoostingRegressor(n_estimators=100, random_state=42),
-        'SVR': SVR(kernel='rbf', C=1.0, gamma='scale')
+        'SVR': SVR(kernel='rbf', C=1.0, gamma='scale'),
+        'MLP': MLPRegressor(hidden_layer_sizes=(100, 50), max_iter=1000, random_state=42)
     }
-    
     results = {}
     predictions = {}
-    
     for model_name, model in models.items():
         print(f"Training {model_name} for {target_col}...")
-        
-        # Train model
-        if model_name in ['Linear_Regression', 'Ridge', 'SVR']:
+        if model_name in ['Linear_Regression', 'Ridge', 'SVR', 'MLP']:
             model.fit(X_train_scaled, y_train)
             train_pred = model.predict(X_train_scaled)
             test_pred = model.predict(X_test_scaled)
@@ -163,50 +121,38 @@ def train_models(data, target_col, train_year_cutoff=2015):
             model.fit(X_train, y_train)
             train_pred = model.predict(X_train)
             test_pred = model.predict(X_test)
-        
-        # Calculate metrics
         train_metrics = calculate_metrics(y_train, train_pred)
         test_metrics = calculate_metrics(y_test, test_pred)
-        
         results[model_name] = {
             'train': train_metrics,
             'test': test_metrics
         }
-        
         predictions[model_name] = {
             'train_pred': train_pred,
             'test_pred': test_pred,
             'y_train': y_train,
             'y_test': y_test,
-            'train_dates': train_data[['year_x', 'month_x']],
-            'test_dates': test_data[['year_x', 'month_x']]
+            'train_dates': train_data[['year', 'month']],
+            'test_dates': test_data[['year', 'month']]
         }
-    
     return results, predictions
 
 def main():
     """Main function"""
     print("Starting Flow Prediction Application")
     print("=" * 50)
-    
-    # Process data
-    monthly_flow = process_flow_data()
+    # Carrega dados já no novo formato
     met_data = load_meteorological_data()
-    merged_datasets = merge_data(monthly_flow, met_data)
-    
-    # Train models for each flow station
+    merged_datasets = merge_data(met_data)
+    # Treina modelos para cada estação
     all_results = {}
     all_predictions = {}
-    
-    for flow_col in [58030000, 58060000]:
-        print(f"\n{'='*20} Processing {flow_col} {'='*20}")
-        
-        if flow_col in merged_datasets:
-            results, predictions = train_models(merged_datasets[flow_col], flow_col)
-            if results:
-                all_results[flow_col] = results
-                all_predictions[flow_col] = predictions
-    
+    for station_id in merged_datasets:
+        print(f"\n{'='*20} Processing station {station_id} {'='*20}")
+        results, predictions = train_models(merged_datasets[station_id], 'flow_next_month')
+        if results:
+            all_results[station_id] = results
+            all_predictions[station_id] = predictions
     return all_results, all_predictions, merged_datasets
 
 if __name__ == "__main__":

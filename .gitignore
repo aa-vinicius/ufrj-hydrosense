@@ -44,3 +44,6 @@ wheels/
 
 # Data
 data/meteo_vazao_shifted_station_58030000.csv
+
+# Outputs
+outputs/*
