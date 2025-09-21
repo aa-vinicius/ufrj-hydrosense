@@ -15,25 +15,24 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 @pytest.fixture
 def sample_meteorological_data():
-    """Create sample meteorological data for testing."""
-    np.random.seed(42)  # For reproducible tests
-    
+    """Create sample meteorological data for testing (novo padrão)."""
+    np.random.seed(42)
     dates = pd.date_range('2010-01-01', '2020-12-31', freq='M')
-    n_records = len(dates) * 2  # Two subbasins
-    
+    n_records = len(dates) * 2  # Duas sub-bacias
     data = {
-        'year_x': np.repeat([d.year for d in dates], 2),
-        'month_x': np.repeat([d.month for d in dates], 2),
-        'ID_Subbasin': np.tile([24, 36], len(dates)),
-        'u2_y': np.random.uniform(1.0, 3.0, n_records),
-        'tmin_y': np.random.uniform(15.0, 25.0, n_records),
-        'tmax_y': np.random.uniform(25.0, 35.0, n_records),
-        'rs_y': np.random.uniform(15.0, 25.0, n_records),
-        'rh_y': np.random.uniform(60.0, 90.0, n_records),
-        'eto_y': np.random.uniform(3.0, 7.0, n_records),
-        'pr_y': np.random.uniform(0.0, 200.0, n_records)
+        'year': np.repeat([d.year for d in dates], 2),
+        'month': np.repeat([d.month for d in dates], 2),
+        'subbasin_id': np.tile([24, 36], len(dates)),
+        'u2': np.random.uniform(1.0, 3.0, n_records),
+        'tmin': np.random.uniform(15.0, 25.0, n_records),
+        'tmax': np.random.uniform(25.0, 35.0, n_records),
+        'rs': np.random.uniform(15.0, 25.0, n_records),
+        'rh': np.random.uniform(60.0, 90.0, n_records),
+        'eto': np.random.uniform(3.0, 7.0, n_records),
+        'pr': np.random.uniform(0.0, 200.0, n_records),
+        'station_id': np.tile([58030000, 58060000], len(dates)),
+        'flow_next_month': np.random.uniform(8.0, 20.0, n_records)
     }
-    
     return pd.DataFrame(data)
 
 @pytest.fixture
@@ -74,37 +73,32 @@ def sample_monthly_flow_data():
 
 @pytest.fixture
 def sample_merged_data():
-    """Create sample merged dataset for testing."""
+    """Create sample merged dataset for testing (novo padrão)."""
     np.random.seed(42)
-    
     n_records = 100
-    
+    subbasins = np.random.choice([24, 36], n_records)
+    station_ids = [58030000 if sb == 24 else 58060000 for sb in subbasins]
     data = {
-        'year_x': np.random.randint(2010, 2021, n_records),
-        'month_x': np.random.randint(1, 13, n_records),
-        'ID_Subbasin': np.random.choice([24, 36], n_records),
-        'u2_y': np.random.uniform(1.0, 3.0, n_records),
-        'tmin_y': np.random.uniform(15.0, 25.0, n_records),
-        'tmax_y': np.random.uniform(25.0, 35.0, n_records),
-        'rs_y': np.random.uniform(15.0, 25.0, n_records),
-        'rh_y': np.random.uniform(60.0, 90.0, n_records),
-        'eto_y': np.random.uniform(3.0, 7.0, n_records),
-        'pr_y': np.random.uniform(0.0, 200.0, n_records),
-        58030000: np.random.uniform(8.0, 15.0, n_records),
-        58060000: np.random.uniform(5.0, 12.0, n_records),
         'year': np.random.randint(2010, 2021, n_records),
-        'month': np.random.randint(1, 13, n_records)
+        'month': np.random.randint(1, 13, n_records),
+        'subbasin_id': subbasins,
+        'u2': np.random.uniform(1.5, 2.5, n_records),
+        'tmin': np.random.uniform(15.0, 25.0, n_records),
+        'tmax': np.random.uniform(25.0, 35.0, n_records),
+        'rs': np.random.uniform(15.0, 25.0, n_records),
+        'rh': np.random.uniform(60.0, 90.0, n_records),
+        'eto': np.random.uniform(3.0, 7.0, n_records),
+        'pr': np.random.uniform(0.0, 200.0, n_records),
+        'station_id': station_ids,
+        'flow_next_month': np.random.uniform(8.0, 15.0, n_records)
     }
-    
     return pd.DataFrame(data)
 
 @pytest.fixture
 def sample_predictions():
-    """Create sample model predictions for testing."""
+    """Create sample model predictions for testing (novo padrão)."""
     np.random.seed(42)
-    
     n_samples = 50
-    
     return {
         'Random_Forest': {
             'train_pred': np.random.uniform(5.0, 15.0, n_samples),
@@ -112,12 +106,12 @@ def sample_predictions():
             'y_train': np.random.uniform(5.0, 15.0, n_samples),
             'y_test': np.random.uniform(5.0, 15.0, n_samples//2),
             'train_dates': pd.DataFrame({
-                'year_x': np.random.randint(2010, 2016, n_samples),
-                'month_x': np.random.randint(1, 13, n_samples)
+                'year': np.random.randint(2010, 2016, n_samples),
+                'month': np.random.randint(1, 13, n_samples)
             }),
             'test_dates': pd.DataFrame({
-                'year_x': np.random.randint(2016, 2021, n_samples//2),
-                'month_x': np.random.randint(1, 13, n_samples//2)
+                'year': np.random.randint(2016, 2021, n_samples//2),
+                'month': np.random.randint(1, 13, n_samples//2)
             })
         }
     }

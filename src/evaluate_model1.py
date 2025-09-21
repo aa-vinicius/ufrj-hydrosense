@@ -27,7 +27,7 @@ def save_model1_results():
                 'R2': metrics['train'].get('R2', None),
                 'KGE': metrics['train'].get('KGE', None),
                 'PBIAS': metrics['train'].get('PBIAS', None),
-                'BIAS': metrics['train'].get('BIAS', None),
+                'Bias': metrics['train'].get('Bias', metrics['train'].get('BIAS', None)),
                 'Nash_Sutcliffe': metrics['train']['Nash_Sutcliffe']
             }
             model1_results.append(train_row)
@@ -43,7 +43,7 @@ def save_model1_results():
                 'R2': metrics['test'].get('R2', None),
                 'KGE': metrics['test'].get('KGE', None),
                 'PBIAS': metrics['test'].get('PBIAS', None),
-                'BIAS': metrics['test'].get('BIAS', None),
+                'Bias': metrics['test'].get('Bias', metrics['test'].get('BIAS', None)),
                 'Nash_Sutcliffe': metrics['test']['Nash_Sutcliffe']
             }
             model1_results.append(test_row)
@@ -54,7 +54,7 @@ def save_model1_results():
     
     print("Model 1 results saved to 'model1_performance_metrics.csv'")
     print("\nModel 1 Performance Summary:")
-    print(model1_df.groupby(['Flow_Station', 'Dataset'])[['RMSE', 'MAE', 'Correlation', 'Nash_Sutcliffe']].mean())
+    print(model1_df.groupby(['Flow_Station', 'Dataset'])[['RMSE', 'MAE', 'Bias', 'Nash_Sutcliffe']].mean())
     
     return results, predictions, datasets
 

@@ -36,8 +36,8 @@ class TestPlotCreation:
                     'y_test': pd.Series([10, 12, 14, 16, 18]),
                     'test_pred': np.array([10.5, 11.8, 13.5, 15.8, 17.2]),
                     'test_dates': pd.DataFrame({
-                        'year_x': [2016, 2016, 2017, 2017, 2018],
-                        'month_x': [1, 6, 1, 6, 1]
+                        'year': [2016, 2016, 2017, 2017, 2018],
+                        'month': [1, 6, 1, 6, 1]
                     })
                 }
             }
@@ -68,29 +68,25 @@ class TestPlotCreation:
         assert mock_savefig.call_count > 0
     
     def test_date_creation_logic(self):
-        """Test date creation from year and month columns."""
+        """Test date creation from year and month columns (novo padrão)."""
         # Sample test dates
         test_dates = pd.DataFrame({
-            'year_x': [2016, 2017, 2018],
-            'month_x': [1, 6, 12]
+            'year': [2016, 2017, 2018],
+            'month': [1, 6, 12]
         })
-        
-        # Simulate the date creation logic from create_plots.py
-        date_df = test_dates[['year_x', 'month_x']].copy()
+        # Simula a lógica de criação de datas do create_plots.py
+        date_df = test_dates[['year', 'month']].copy()
         date_df['day'] = 1
-        dates = pd.to_datetime(date_df.rename(columns={'year_x': 'year', 'month_x': 'month'}))
-        
+        dates = pd.to_datetime(date_df)
         # Test results
         assert len(dates) == 3
         assert dates.dtype == 'datetime64[ns]'
-        
         # Check specific dates
         expected_dates = [
             pd.Timestamp('2016-01-01'),
             pd.Timestamp('2017-06-01'),
             pd.Timestamp('2018-12-01')
         ]
-        
         for i, expected_date in enumerate(expected_dates):
             assert dates.iloc[i] == expected_date
     

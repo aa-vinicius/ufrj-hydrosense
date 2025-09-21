@@ -26,60 +26,31 @@ class TestEndToEndPipeline:
     """Test complete end-to-end pipeline functionality."""
     
     def test_complete_pipeline_with_real_data_structure(self, tmp_path):
-        """Test complete pipeline with realistic data structure."""
-        # Create test data files
+        """Testa pipeline completo com a nova estrutura de dados."""
         test_files = create_test_files(tmp_path)
-        
-        # Change working directory to temp path for testing
         original_cwd = os.getcwd()
         os.chdir(tmp_path)
-        
         try:
-            # Import modules after changing directory
             import flow_prediction_app as fpa
-            
-            # Test data loading
-            with patch('flow_prediction_app.pd.read_excel') as mock_read_excel, \
-                 patch('flow_prediction_app.pd.read_csv') as mock_read_csv:
-                
-                mock_read_excel.return_value = test_files['flow_data']
+            with patch('flow_prediction_app.pd.read_csv') as mock_read_csv:
                 mock_read_csv.return_value = test_files['met_data']
-                
-                # Test individual pipeline components
-                monthly_flow = fpa.process_flow_data()
                 met_data = fpa.load_meteorological_data()
-                merged_datasets = fpa.merge_data(monthly_flow, met_data)
-                
-                # Validate pipeline outputs
-                assert isinstance(monthly_flow, pd.DataFrame)
+                merged_datasets = fpa.merge_data(met_data)
                 assert isinstance(met_data, pd.DataFrame)
                 assert isinstance(merged_datasets, dict)
-                
-                # Test that we have data for expected stations
-                expected_stations = [58030000, 58060000]
                 available_stations = list(merged_datasets.keys())
-                
-                # Should have at least one station with data
                 assert len(available_stations) > 0
-                
-                # Test model training if we have sufficient data
-                for flow_col, dataset in merged_datasets.items():
-                    if len(dataset) > 50:  # Sufficient data for training
-                        # Ensure proper train/test split
-                        dataset.loc[:30, 'year_x'] = 2014  # Training
-                        dataset.loc[30:, 'year_x'] = 2017  # Testing
-                        
-                        result = fpa.train_models(dataset, flow_col, train_year_cutoff=2015)
-                        
+                for station_id, dataset in merged_datasets.items():
+                    if len(dataset) > 50:
+                        dataset.loc[:30, 'year'] = 2014
+                        dataset.loc[30:, 'year'] = 2017
+                        result = fpa.train_models(dataset, 'flow_next_month', train_year_cutoff=2015)
                         if result is not None:
                             results, predictions = result
                             assert isinstance(results, dict)
                             assert isinstance(predictions, dict)
-                            
-                            # Check that we have results for at least one model
                             assert len(results) > 0
                             assert len(predictions) > 0
-        
         finally:
             os.chdir(original_cwd)
     

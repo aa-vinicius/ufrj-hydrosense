@@ -17,7 +17,7 @@ def nash_sutcliffe_efficiency(observed, predicted):
     denominator = np.sum((observed - mean_observed) ** 2)
     return 1 - (numerator / denominator)
 
-from metricas_gutemberg import nse, kge, rmse, mae, r2, pbias
+from metricas_gutemberg import nse, kge, rmse, mae, r2, pbias, bias
 
 def calculate_metrics(observed, predicted):
     """Calculate performance metrics (todas as métricas hidrológicas)"""
@@ -27,7 +27,8 @@ def calculate_metrics(observed, predicted):
         'R2': r2(observed, predicted),
         'Nash_Sutcliffe': nse(observed, predicted),
         'KGE': kge(observed, predicted),
-        'PBIAS': pbias(observed, predicted)
+        'PBIAS': pbias(observed, predicted),
+        'Bias': bias(observed, predicted)
     }
 
 def process_flow_data():
@@ -73,8 +74,10 @@ def load_meteorological_data():
     print(f"Meteorological data shape: {met_data_clean.shape}")
     return met_data_clean
 
-def merge_data(met_data):
+def merge_data(flow_data, met_data):
     """Com a nova estrutura, não é necessário merge externo. Apenas filtra por estação/subbacia se necessário."""
+    if flow_data is None or met_data is None or flow_data.empty or met_data.empty:
+        return {}
     print("Preparando datasets por estação...")
     merged_datasets = {}
     for station_id in met_data['station_id'].unique():
@@ -86,6 +89,9 @@ def merge_data(met_data):
 def train_models(data, target_col='flow_next_month', train_year_cutoff=2015):
     """Treina múltiplos modelos de ML com a nova estrutura de dados"""
     predictor_cols = ['year', 'month', 'u2', 'tmin', 'tmax', 'rs', 'rh', 'eto', 'pr']
+    if data is None or data.empty or not all(col in data.columns for col in predictor_cols + [target_col]):
+        print(f"Warning: DataFrame vazio ou colunas ausentes para {target_col}")
+        return None, None
     # Split data
     train_data = data[data['year'] <= train_year_cutoff]
     test_data = data[data['year'] > train_year_cutoff]

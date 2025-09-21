@@ -14,16 +14,16 @@ def create_time_series_plots():
     # Create plots for each flow station
     for flow_col in model1_preds.keys():
         subbasin_id = 24 if flow_col == 58030000 else 36
-        
+
         # Get test data
         test_dates = model1_preds[flow_col]['Random_Forest']['test_dates']
-        observed = model1_preds[flow_col]['Random_Forest']['y_test'].values
+        observed = model1_preds[flow_col]['Random_Forest']['y_test']
         model1_pred = model1_preds[flow_col]['Random_Forest']['test_pred']
-        
+
         # Create date column for plotting
-        date_df = test_dates[['year_x', 'month_x']].copy()
+        date_df = test_dates[['year', 'month']].copy()
         date_df['day'] = 1
-        dates = pd.to_datetime(date_df.rename(columns={'year_x': 'year', 'month_x': 'month'}))
+        dates = pd.to_datetime(date_df.assign(day=1)[['year', 'month', 'day']].astype(int).apply(lambda row: f"{row['year']}-{row['month']:02d}-01", axis=1))
         
         # Get confidence intervals if available
         if flow_col in ci:

@@ -1,3 +1,9 @@
+def bias(Qobs, Qsim):
+    """Bias absoluto médio (não percentual)."""
+    Qobs, Qsim = np.array(Qobs), np.array(Qsim)
+    if len(Qobs) < 2 or len(Qsim) < 2 or np.any(np.isnan(Qobs)) or np.any(np.isnan(Qsim)):
+        return None
+    return np.mean(Qobs - Qsim)
 # =============================================================================
 # Rotina de cálculo de métricas hidrológicas
 #
@@ -63,33 +69,64 @@ from scipy.stats import pearsonr
 def nse(Qobs, Qsim):
     """Nash–Sutcliffe Efficiency"""
     Qobs, Qsim = np.array(Qobs), np.array(Qsim)
-    return 1 - np.sum((Qobs - Qsim)**2) / np.sum((Qobs - np.mean(Qobs))**2)
+    if len(Qobs) < 2 or len(Qsim) < 2 or np.any(np.isnan(Qobs)) or np.any(np.isnan(Qsim)):
+        return None
+    denom = np.sum((Qobs - np.mean(Qobs))**2)
+    if denom == 0:
+        return None
+    return 1 - np.sum((Qobs - Qsim)**2) / denom
 
 def kge(Qobs, Qsim):
     """Kling–Gupta Efficiency"""
     Qobs, Qsim = np.array(Qobs), np.array(Qsim)
-    r, _ = pearsonr(Qsim, Qobs)
-    beta = np.mean(Qsim) / np.mean(Qobs)
-    gamma = (np.std(Qsim) / np.mean(Qsim)) / (np.std(Qobs) / np.mean(Qobs))
+    if len(Qobs) < 2 or len(Qsim) < 2 or np.any(np.isnan(Qobs)) or np.any(np.isnan(Qsim)):
+        return None
+    try:
+        r, _ = pearsonr(Qsim, Qobs)
+    except Exception:
+        return None
+    mean_qsim = np.mean(Qsim)
+    mean_qobs = np.mean(Qobs)
+    if mean_qsim == 0 or mean_qobs == 0:
+        return None
+    beta = mean_qsim / mean_qobs
+    std_qsim = np.std(Qsim)
+    std_qobs = np.std(Qobs)
+    if std_qsim == 0 or std_qobs == 0:
+        return None
+    gamma = (std_qsim / mean_qsim) / (std_qobs / mean_qobs)
     return 1 - np.sqrt((r - 1)**2 + (beta - 1)**2 + (gamma - 1)**2)
 
 def rmse(Qobs, Qsim):
     """Root Mean Squared Error"""
     Qobs, Qsim = np.array(Qobs), np.array(Qsim)
+    if len(Qobs) < 2 or len(Qsim) < 2 or np.any(np.isnan(Qobs)) or np.any(np.isnan(Qsim)):
+        return None
     return np.sqrt(np.mean((Qobs - Qsim)**2))
 
 def mae(Qobs, Qsim):
     """Mean Absolute Error"""
     Qobs, Qsim = np.array(Qobs), np.array(Qsim)
+    if len(Qobs) < 2 or len(Qsim) < 2 or np.any(np.isnan(Qobs)) or np.any(np.isnan(Qsim)):
+        return None
     return np.mean(np.abs(Qobs - Qsim))
 
 def r2(Qobs, Qsim):
     """Coeficiente de Determinação R²"""
     Qobs, Qsim = np.array(Qobs), np.array(Qsim)
+    if len(Qobs) < 2 or len(Qsim) < 2 or np.any(np.isnan(Qobs)) or np.any(np.isnan(Qsim)):
+        return None
     corr_matrix = np.corrcoef(Qobs, Qsim)
+    if np.isnan(corr_matrix[0,1]):
+        return None
     return corr_matrix[0,1]**2
 
 def pbias(Qobs, Qsim):
     """Percent Bias"""
     Qobs, Qsim = np.array(Qobs), np.array(Qsim)
-    return 100.0 * np.sum(Qobs - Qsim) / np.sum(Qobs)
+    if len(Qobs) < 2 or len(Qsim) < 2 or np.any(np.isnan(Qobs)) or np.any(np.isnan(Qsim)):
+        return None
+    denom = np.sum(Qobs)
+    if denom == 0:
+        return None
+    return 100.0 * np.sum(Qobs - Qsim) / denom

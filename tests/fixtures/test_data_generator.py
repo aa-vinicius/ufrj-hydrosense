@@ -16,31 +16,29 @@ class TestDataGenerator:
         np.random.seed(seed)
         self.seed = seed
     
-    def generate_meteorological_csv(self, filepath, start_year=2010, end_year=2020, subbasins=[24, 36]):
-        """Generate a realistic meteorological CSV file."""
+    def generate_meteo_vazao_csv(self, filepath, start_year=2010, end_year=2020, subbasins=[24, 36]):
+        """Gera CSV no novo formato para o pipeline revisado."""
         dates = pd.date_range(f'{start_year}-01-01', f'{end_year}-12-31', freq='M')
-        
         data = []
         for date in dates:
             for subbasin in subbasins:
-                # Generate realistic seasonal patterns
-                month = date.month
-                seasonal_factor = np.sin(2 * np.pi * month / 12)
-                
+                station_id = 58030000 if subbasin == 24 else 58060000
+                seasonal_factor = np.sin(2 * np.pi * date.month / 12)
                 record = {
-                    'year_x': date.year,
-                    'month_x': date.month,
-                    'ID_Subbasin': subbasin,
-                    'u2_y': np.random.uniform(1.5, 2.5) + 0.3 * seasonal_factor,
-                    'tmin_y': 20 + 5 * seasonal_factor + np.random.normal(0, 2),
-                    'tmax_y': 30 + 5 * seasonal_factor + np.random.normal(0, 2),
-                    'rs_y': 20 + 3 * seasonal_factor + np.random.normal(0, 1),
-                    'rh_y': 75 - 10 * seasonal_factor + np.random.normal(0, 5),
-                    'eto_y': 5 + 2 * seasonal_factor + np.random.normal(0, 0.5),
-                    'pr_y': max(0, 100 + 50 * seasonal_factor + np.random.normal(0, 30))
+                    'year': date.year,
+                    'month': date.month,
+                    'subbasin_id': subbasin,
+                    'u2': np.random.uniform(1.5, 2.5) + 0.3 * seasonal_factor,
+                    'tmin': 20 + 5 * seasonal_factor + np.random.normal(0, 2),
+                    'tmax': 30 + 5 * seasonal_factor + np.random.normal(0, 2),
+                    'rs': 20 + 3 * seasonal_factor + np.random.normal(0, 1),
+                    'rh': 75 - 10 * seasonal_factor + np.random.normal(0, 5),
+                    'eto': 5 + 2 * seasonal_factor + np.random.normal(0, 0.5),
+                    'pr': max(0, 100 + 50 * seasonal_factor + np.random.normal(0, 30)),
+                    'station_id': station_id,
+                    'flow_next_month': 10 + 2 * seasonal_factor + np.random.normal(0, 1)
                 }
                 data.append(record)
-        
         df = pd.DataFrame(data)
         df.to_csv(filepath, index=False)
         return df
@@ -86,58 +84,55 @@ class TestDataGenerator:
         return df
     
     def generate_small_dataset(self, n_records=50):
-        """Generate a small dataset for quick testing."""
+        """Gera um pequeno DataFrame no novo formato do pipeline revisado."""
         np.random.seed(self.seed)
-        
+        subbasins = np.random.choice([24, 36], n_records)
+        station_ids = [58030000 if sb == 24 else 58060000 for sb in subbasins]
         data = {
-            'year_x': np.random.randint(2015, 2021, n_records),
-            'month_x': np.random.randint(1, 13, n_records),
-            'ID_Subbasin': np.random.choice([24, 36], n_records),
-            'u2_y': np.random.uniform(1.0, 3.0, n_records),
-            'tmin_y': np.random.uniform(15.0, 25.0, n_records),
-            'tmax_y': np.random.uniform(25.0, 35.0, n_records),
-            'rs_y': np.random.uniform(15.0, 25.0, n_records),
-            'rh_y': np.random.uniform(60.0, 90.0, n_records),
-            'eto_y': np.random.uniform(3.0, 7.0, n_records),
-            'pr_y': np.random.uniform(0.0, 200.0, n_records),
-            58030000: np.random.uniform(8.0, 15.0, n_records),
-            58060000: np.random.uniform(5.0, 12.0, n_records)
+            'year': np.random.randint(2015, 2021, n_records),
+            'month': np.random.randint(1, 13, n_records),
+            'subbasin_id': subbasins,
+            'u2': np.random.uniform(1.5, 2.5, n_records),
+            'tmin': np.random.uniform(15.0, 25.0, n_records),
+            'tmax': np.random.uniform(25.0, 35.0, n_records),
+            'rs': np.random.uniform(15.0, 25.0, n_records),
+            'rh': np.random.uniform(60.0, 90.0, n_records),
+            'eto': np.random.uniform(3.0, 7.0, n_records),
+            'pr': np.random.uniform(0.0, 200.0, n_records),
+            'station_id': station_ids,
+            'flow_next_month': np.random.uniform(8.0, 15.0, n_records)
         }
-        
         return pd.DataFrame(data)
     
     def generate_edge_case_data(self):
-        """Generate edge case data for robust testing."""
+        """Gera DataFrames de casos extremos no novo formato do pipeline revisado."""
         # Empty dataset
-        empty_df = pd.DataFrame()
-        
+        empty_df = pd.DataFrame({col: [] for col in [
+            'year', 'month', 'subbasin_id', 'u2', 'tmin', 'tmax', 'rs', 'rh', 'eto', 'pr', 'station_id', 'flow_next_month']})
         # Single record dataset
         single_record = pd.DataFrame({
-            'year_x': [2015],
-            'month_x': [6],
-            'ID_Subbasin': [24],
-            'u2_y': [2.0],
-            'tmin_y': [20.0],
-            'tmax_y': [30.0],
-            'rs_y': [20.0],
-            'rh_y': [75.0],
-            'eto_y': [5.0],
-            'pr_y': [100.0],
-            58030000: [10.0],
-            58060000: [7.0]
+            'year': [2015],
+            'month': [6],
+            'subbasin_id': [24],
+            'u2': [2.0],
+            'tmin': [20.0],
+            'tmax': [30.0],
+            'rs': [20.0],
+            'rh': [75.0],
+            'eto': [5.0],
+            'pr': [100.0],
+            'station_id': [58030000],
+            'flow_next_month': [10.0]
         })
-        
         # Dataset with missing values
         missing_data = self.generate_small_dataset(20)
-        missing_data.loc[0:5, 'u2_y'] = np.nan
-        missing_data.loc[10:15, 58030000] = np.nan
-        
+        missing_data.loc[0:5, 'u2'] = np.nan
+        missing_data.loc[10:15, 'flow_next_month'] = np.nan
         # Dataset with extreme values
         extreme_data = self.generate_small_dataset(20)
-        extreme_data.loc[0, 'pr_y'] = 1000.0  # Extreme precipitation
-        extreme_data.loc[1, 'tmin_y'] = -10.0  # Extreme temperature
-        extreme_data.loc[2, 58030000] = 100.0  # Extreme flow
-        
+        extreme_data.loc[0, 'pr'] = 1000.0  # Precipitação extrema
+        extreme_data.loc[1, 'tmin'] = -10.0  # Temperatura extrema
+        extreme_data.loc[2, 'flow_next_month'] = 100.0  # Vazão extrema
         return {
             'empty': empty_df,
             'single_record': single_record,
@@ -146,23 +141,13 @@ class TestDataGenerator:
         }
 
 def create_test_files(temp_dir):
-    """Create all necessary test files in a temporary directory."""
+    """Cria arquivos de teste no novo formato para o pipeline revisado."""
     generator = TestDataGenerator()
-    
-    # Create data subdirectory
     data_dir = temp_dir / 'data'
     data_dir.mkdir(exist_ok=True)
-    
-    # Generate test files
-    met_file = data_dir / 'glob-funil-subbasin.csv'
-    flow_file = data_dir / 'Vazao_FUNIL.xlsx'
-    
-    met_data = generator.generate_meteorological_csv(met_file)
-    flow_data = generator.generate_flow_excel(flow_file)
-    
+    met_file = data_dir / 'meteo_vazao_shifted_station_58030000.csv'
+    met_data = generator.generate_meteo_vazao_csv(met_file)
     return {
         'met_file': met_file,
-        'flow_file': flow_file,
-        'met_data': met_data,
-        'flow_data': flow_data
+        'met_data': met_data
     }

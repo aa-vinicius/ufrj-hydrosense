@@ -12,6 +12,9 @@ warnings.filterwarnings('ignore')
 def train_error_models(data, target_col, model1_predictions, train_year_cutoff=2015):
     """Treina modelos para prever os erros do Modelo 1 usando a nova estrutura de dados"""
     predictor_cols = ['year', 'month', 'u2', 'tmin', 'tmax', 'rs', 'rh', 'eto', 'pr']
+    if data is None or data.empty or not all(col in data.columns for col in predictor_cols):
+        print(f"Warning: DataFrame vazio ou colunas ausentes para {target_col}")
+        return None, None
     # Split data
     train_data = data[data['year'] <= train_year_cutoff]
     test_data = data[data['year'] > train_year_cutoff]
@@ -39,8 +42,19 @@ def train_error_models(data, target_col, model1_predictions, train_year_cutoff=2
     if best_model not in model1_predictions:
         print(f"Warning: {best_model} not found in Model 1 predictions")
         return None, None
-    train_errors = model1_predictions[best_model]['y_train'].values - model1_predictions[best_model]['train_pred']
-    test_errors = model1_predictions[best_model]['y_test'].values - model1_predictions[best_model]['test_pred']
+    y_train = model1_predictions[best_model]['y_train']
+    y_train_pred = model1_predictions[best_model]['train_pred']
+    y_test = model1_predictions[best_model]['y_test']
+    y_test_pred = model1_predictions[best_model]['test_pred']
+    # Checar tamanhos e NaN
+    if len(y_train) != len(X_train) or len(y_test) != len(X_test):
+        print("Warning: Tamanhos inconsistentes entre X e y para erro.")
+        return None, None
+    if np.any(np.isnan(X_train)) or np.any(np.isnan(y_train)) or np.any(np.isnan(X_test)) or np.any(np.isnan(y_test)) or np.any(np.isnan(y_train_pred)) or np.any(np.isnan(y_test_pred)):
+        print("Warning: Dados com NaN detectados para erro.")
+        return None, None
+    train_errors = y_train - y_train_pred
+    test_errors = y_test - y_test_pred
     for model_name, model in models.items():
         print(f"Training {model_name} for error prediction of {target_col}...")
         if model_name in ['Linear_Regression', 'Ridge', 'SVR', 'MLP']:
@@ -79,6 +93,10 @@ def create_confidence_intervals(model1_preds, model2_preds, confidence_level=0.9
     # Get Model 1 predictions and Model 2 error predictions
     test_flow_pred = model1_preds['Random_Forest']['test_pred']
     test_error_pred = model2_preds[best_error_model]['test_error_pred']
+    # Checar tamanhos
+    if len(test_flow_pred) != len(test_error_pred):
+        print("Warning: Tamanhos inconsistentes entre test_flow_pred e test_error_pred.")
+        return None
     
     # Calculate standard deviation of error predictions for confidence intervals
     error_std = np.std(model2_preds[best_error_model]['test_errors'])

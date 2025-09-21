@@ -31,15 +31,13 @@ class TestModel1Evaluation:
                     'train': {
                         'RMSE': 3.5,
                         'MAE': 2.8,
-                        'Correlation': 0.85,
-                        'BIAS': 0.1,
+                            'Bias': 0.1,
                         'Nash_Sutcliffe': 0.72
                     },
                     'test': {
                         'RMSE': 4.2,
                         'MAE': 3.1,
-                        'Correlation': 0.78,
-                        'BIAS': 0.3,
+                            'Bias': 0.3,
                         'Nash_Sutcliffe': 0.65
                     }
                 }
@@ -49,15 +47,13 @@ class TestModel1Evaluation:
                     'train': {
                         'RMSE': 2.1,
                         'MAE': 1.6,
-                        'Correlation': 0.88,
-                        'BIAS': -0.05,
+                            'Bias': -0.05,
                         'Nash_Sutcliffe': 0.77
                     },
                     'test': {
                         'RMSE': 2.8,
                         'MAE': 2.0,
-                        'Correlation': 0.82,
-                        'BIAS': 0.15,
+                            'Bias': 0.15,
                         'Nash_Sutcliffe': 0.68
                     }
                 }
@@ -92,15 +88,13 @@ class TestModel1Evaluation:
                     'train': {
                         'RMSE': 4.0,
                         'MAE': 3.0,
-                        'Correlation': 0.8,
-                        'BIAS': 0.2,
+                        'Bias': 0.2,
                         'Nash_Sutcliffe': 0.6
                     },
                     'test': {
                         'RMSE': 5.0,
                         'MAE': 4.0,
-                        'Correlation': 0.7,
-                        'BIAS': 0.3,
+                        'Bias': 0.3,
                         'Nash_Sutcliffe': 0.5
                     }
                 }
@@ -121,8 +115,7 @@ class TestModel1Evaluation:
                     'Dataset': 'Training',
                     'RMSE': metrics['train']['RMSE'],
                     'MAE': metrics['train']['MAE'],
-                    'Correlation': metrics['train']['Correlation'],
-                    'BIAS': metrics['train']['BIAS'],
+                    'Bias': metrics['train']['Bias'],
                     'Nash_Sutcliffe': metrics['train']['Nash_Sutcliffe']
                 }
                 results_list.append(train_row)
@@ -135,8 +128,7 @@ class TestModel1Evaluation:
                     'Dataset': 'Test',
                     'RMSE': metrics['test']['RMSE'],
                     'MAE': metrics['test']['MAE'],
-                    'Correlation': metrics['test']['Correlation'],
-                    'BIAS': metrics['test']['BIAS'],
+                    'Bias': metrics['test']['Bias'],
                     'Nash_Sutcliffe': metrics['test']['Nash_Sutcliffe']
                 }
                 results_list.append(test_row)
@@ -145,7 +137,7 @@ class TestModel1Evaluation:
         
         # Test DataFrame structure
         expected_columns = ['Flow_Station', 'Subbasin_ID', 'Model', 'Dataset', 
-                          'RMSE', 'MAE', 'Correlation', 'BIAS', 'Nash_Sutcliffe']
+                          'RMSE', 'MAE', 'Bias', 'Nash_Sutcliffe']
         
         for col in expected_columns:
             assert col in df.columns
@@ -156,7 +148,7 @@ class TestModel1Evaluation:
         assert df['Dataset'].isin(['Training', 'Test']).all()
         
         # Test metric values are numeric
-        metric_cols = ['RMSE', 'MAE', 'Correlation', 'BIAS', 'Nash_Sutcliffe']
+        metric_cols = ['RMSE', 'MAE', 'Bias', 'Nash_Sutcliffe']
         for col in metric_cols:
             assert pd.api.types.is_numeric_dtype(df[col])
     
@@ -176,8 +168,8 @@ class TestModel1Evaluation:
         single_result = {
             58030000: {
                 'Linear_Regression': {
-                    'train': {'RMSE': 1.0, 'MAE': 0.8, 'Correlation': 0.9, 'BIAS': 0.0, 'Nash_Sutcliffe': 0.8},
-                    'test': {'RMSE': 1.2, 'MAE': 1.0, 'Correlation': 0.85, 'BIAS': 0.1, 'Nash_Sutcliffe': 0.75}
+                    'train': {'RMSE': 1.0, 'MAE': 0.8, 'Bias': 0.0, 'Nash_Sutcliffe': 0.8},
+                    'test': {'RMSE': 1.2, 'MAE': 1.0, 'Bias': 0.1, 'Nash_Sutcliffe': 0.75}
                 }
             }
         }
@@ -201,15 +193,13 @@ class TestModel2Evaluation:
                     'train': {
                         'RMSE': 1.5,
                         'MAE': 1.2,
-                        'Correlation': 0.4,
-                        'BIAS': 0.05,
+                        'Bias': 0.05,
                         'Nash_Sutcliffe': 0.3
                     },
                     'test': {
                         'RMSE': 2.1,
                         'MAE': 1.8,
-                        'Correlation': 0.2,
-                        'BIAS': 0.1,
+                        'Bias': 0.1,
                         'Nash_Sutcliffe': 0.1
                     }
                 }
@@ -247,15 +237,13 @@ class TestModel2Evaluation:
                     'train': {
                         'RMSE': 1.8,
                         'MAE': 1.4,
-                        'Correlation': 0.3,
-                        'BIAS': 0.0,
+                        'Bias': 0.0,
                         'Nash_Sutcliffe': 0.2
                     },
                     'test': {
                         'RMSE': 2.5,
                         'MAE': 2.0,
-                        'Correlation': 0.1,
-                        'BIAS': 0.05,
+                        'Bias': 0.05,
                         'Nash_Sutcliffe': -0.1
                     }
                 }
@@ -276,8 +264,7 @@ class TestModel2Evaluation:
                     'Dataset': 'Training',
                     'RMSE': metrics['train']['RMSE'],
                     'MAE': metrics['train']['MAE'],
-                    'Correlation': metrics['train']['Correlation'],
-                    'BIAS': metrics['train']['BIAS'],
+                    'Bias': metrics['train']['Bias'],
                     'Nash_Sutcliffe': metrics['train']['Nash_Sutcliffe']
                 }
                 results_list.append(train_row)
@@ -290,26 +277,18 @@ class TestModel2Evaluation:
                     'Dataset': 'Test',
                     'RMSE': metrics['test']['RMSE'],
                     'MAE': metrics['test']['MAE'],
-                    'Correlation': metrics['test']['Correlation'],
-                    'BIAS': metrics['test']['BIAS'],
+                    'Bias': metrics['test']['Bias'],
                     'Nash_Sutcliffe': metrics['test']['Nash_Sutcliffe']
                 }
                 results_list.append(test_row)
         
         df = pd.DataFrame(results_list)
-        
-        # Test DataFrame structure (same as Model 1)
-        expected_columns = ['Flow_Station', 'Subbasin_ID', 'Model', 'Dataset', 
-                          'RMSE', 'MAE', 'Correlation', 'BIAS', 'Nash_Sutcliffe']
-        
+
+        # Test DataFrame structure (mesmo padrão do Model 1)
+        expected_columns = ['Flow_Station', 'Subbasin_ID', 'Model', 'Dataset',
+                            'RMSE', 'MAE', 'Bias', 'Nash_Sutcliffe']
         for col in expected_columns:
             assert col in df.columns
-        
-        # Test that Model 2 typically has lower correlations (predicting errors is harder)
-        test_correlations = df[df['Dataset'] == 'Test']['Correlation']
-        if len(test_correlations) > 0:
-            # Error prediction correlations are typically lower than flow prediction
-            assert test_correlations.mean() < 0.8  # Should be lower than typical flow predictions
 
 class TestEvaluationMetrics:
     """Test evaluation metrics and statistical calculations."""
@@ -322,13 +301,13 @@ class TestEvaluationMetrics:
             'Dataset': ['Training', 'Test', 'Training', 'Test'],
             'RMSE': [3.0, 4.0, 2.0, 3.0],
             'MAE': [2.5, 3.5, 1.5, 2.5],
-            'Correlation': [0.85, 0.75, 0.90, 0.80],
+            'Bias': [0.1, 0.2, 0.05, 0.15],
             'Nash_Sutcliffe': [0.70, 0.60, 0.80, 0.70]
         })
         
         # Test groupby operations similar to what's used in evaluation
         summary = sample_data.groupby(['Flow_Station', 'Dataset'])[
-            ['RMSE', 'MAE', 'Correlation', 'Nash_Sutcliffe']
+            ['RMSE', 'MAE', 'Bias', 'Nash_Sutcliffe']
         ].mean()
         
         # Check summary structure
@@ -336,14 +315,12 @@ class TestEvaluationMetrics:
         assert len(summary) == 4  # 2 stations × 2 datasets
         
         # Check that all metrics are present
-        expected_metrics = ['RMSE', 'MAE', 'Correlation', 'Nash_Sutcliffe']
+        expected_metrics = ['RMSE', 'MAE', 'Bias', 'Nash_Sutcliffe']
         for metric in expected_metrics:
             assert metric in summary.columns
-        
         # Check that values are reasonable
         assert (summary['RMSE'] > 0).all()
         assert (summary['MAE'] > 0).all()
-        assert (summary['Correlation'] >= -1).all() and (summary['Correlation'] <= 1).all()
         assert (summary['Nash_Sutcliffe'] <= 1).all()
     
     def test_subbasin_mapping(self):
@@ -365,31 +342,24 @@ class TestEvaluationMetrics:
         good_metrics = {
             'RMSE': 2.5,
             'MAE': 2.0,
-            'Correlation': 0.8,
-            'BIAS': 0.1,
+            'Bias': 0.1,
             'Nash_Sutcliffe': 0.6
         }
-        
         # Validate metric ranges and properties
         assert good_metrics['RMSE'] > 0
         assert good_metrics['MAE'] > 0
         assert good_metrics['RMSE'] >= good_metrics['MAE']  # RMSE should be >= MAE
-        assert -1 <= good_metrics['Correlation'] <= 1
         assert good_metrics['Nash_Sutcliffe'] <= 1
-        
         # Test with edge case values
         edge_metrics = {
             'RMSE': 0.0,  # Perfect prediction
             'MAE': 0.0,   # Perfect prediction
-            'Correlation': 1.0,  # Perfect correlation
-            'BIAS': 0.0,  # No bias
+            'Bias': 0.0,  # No bias
             'Nash_Sutcliffe': 1.0  # Perfect efficiency
         }
-        
         # All should be valid
         assert edge_metrics['RMSE'] >= 0
         assert edge_metrics['MAE'] >= 0
-        assert -1 <= edge_metrics['Correlation'] <= 1
         assert edge_metrics['Nash_Sutcliffe'] <= 1
 
 class TestFileOperations:
@@ -405,8 +375,7 @@ class TestFileOperations:
             'Dataset': ['Test', 'Test'],
             'RMSE': [4.2, 2.8],
             'MAE': [3.1, 2.0],
-            'Correlation': [0.78, 0.82],
-            'BIAS': [0.3, 0.15],
+            'Bias': [0.3, 0.15],
             'Nash_Sutcliffe': [0.65, 0.68]
         })
         
@@ -462,15 +431,13 @@ class TestIntegrationWithMainModules:
                     'train': {
                         'RMSE': float,
                         'MAE': float,
-                        'Correlation': float,
-                        'BIAS': float,
+                        'Bias': float,
                         'Nash_Sutcliffe': float
                     },
                     'test': {
                         'RMSE': float,
                         'MAE': float,
-                        'Correlation': float,
-                        'BIAS': float,
+                        'Bias': float,
                         'Nash_Sutcliffe': float
                     }
                 }
@@ -489,6 +456,6 @@ class TestIntegrationWithMainModules:
                 
                 for dataset_name, metrics in datasets.items():
                     assert dataset_name in ['train', 'test']
-                    required_metrics = ['RMSE', 'MAE', 'Correlation', 'BIAS', 'Nash_Sutcliffe']
+                    required_metrics = ['RMSE', 'MAE', 'Bias', 'Nash_Sutcliffe']
                     for metric in required_metrics:
                         assert metric in metrics
