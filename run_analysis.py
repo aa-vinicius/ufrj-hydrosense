@@ -18,21 +18,40 @@ def run_script(script_path, description):
     print(f"{'='*60}")
     
     try:
-        # Use o mesmo executável Python que está executando este script
-        venv_python = sys.executable
-        # Use o mesmo executável Python que está executando este script
-        venv_python = sys.executable
+        # Define o caminho para o executável Python do ambiente virtual de produção
+        project_root = Path(__file__).parent
+        venv_python = project_root / '.venv-prod' / 'bin' / 'python'
+        
+        # Garante que o executável do venv exista
+        if not venv_python.exists():
+            print(f"❌ Erro: Ambiente virtual de produção não encontrado em '{venv_python}'")
+            print("Por favor, execute o script 'setup_ambientes.sh' para criar os ambientes.")
+            return False
+
         result = subprocess.run([str(venv_python), script_path],
                                 check=True,
                                 cwd='src',
-                                text=True)
+                                text=True,
+                                capture_output=True)
         
+        print(result.stdout)
+        if result.stderr:
+            print("--- STDERR ---")
+            print(result.stderr)
+
         if result.returncode == 0:
             print(f"✅ {description} completed successfully")
         else:
             print(f"❌ {description} failed with return code {result.returncode}")
             return False
             
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Error running {description}: Command '{' '.join(e.cmd)}' returned non-zero exit status {e.returncode}.")
+        print("--- STDOUT ---")
+        print(e.stdout)
+        print("--- STDERR ---")
+        print(e.stderr)
+        return False
     except Exception as e:
         print(f"❌ Error running {description}: {str(e)}")
         return False
@@ -73,14 +92,6 @@ def main():
     
     if success_count == len(scripts):
         print("\n🎉 All analysis steps completed successfully!")
-        print("\n📁 Output files generated:")
-        print("   📊 outputs/model1_performance_metrics.csv")
-        print("   📊 outputs/model2_error_prediction_metrics.csv") 
-        print("   📈 outputs/flow_prediction_station_58030000_subbasin_24.png")
-        print("   📈 outputs/flow_prediction_station_58060000_subbasin_36.png")
-        print("\n📖 Documentation:")
-        print("   📄 docs/README_results.md")
-        print("\n🚀 Ready for deployment and business use!")
     else:
         print(f"\n⚠️  Analysis incomplete. Please check error messages above.")
         return 1

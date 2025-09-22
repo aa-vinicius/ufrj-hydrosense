@@ -147,9 +147,12 @@ def train_models(data, target_col='flow_next_month', train_year_cutoff=2019):
         print(f"Warning: Todos os dados possuem NaN para {target_col}")
         return None, None
 
-    # Split data - flexível baseado nos dados disponíveis
-    train_data = data_clean[data_clean['year'] <= train_year_cutoff]
-    test_data = data_clean[data_clean['year'] > train_year_cutoff]
+    # Split data - 5 last years for testing
+    last_year = data_clean['year'].max()
+    test_start_year = last_year - 4  # 5 years including the last one
+    
+    train_data = data_clean[data_clean['year'] < test_start_year]
+    test_data = data_clean[data_clean['year'] >= test_start_year]
     print(f"  Train data: {len(train_data)} records, Test data: {len(test_data)} records")
     if len(train_data) == 0 or len(test_data) == 0:
         print(f"Warning: Insufficient data for {target_col}")
