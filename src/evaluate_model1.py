@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from flow_prediction_app import main
+import os
 
 def save_model1_results():
     """Evaluate Model 1 and save results to CSV"""
@@ -12,13 +13,16 @@ def save_model1_results():
     # Prepare results for CSV
     model1_results = []
     
-    for flow_col in results.keys():
-        subbasin_id = 24 if flow_col == 58030000 else 36
+    for station_id in results.keys():
+        # Tenta obter o subbasin_id dos dados, se disponível
+        subbasin_id = None
+        if datasets and station_id in datasets and 'subbasin_id' in datasets[station_id].columns:
+            subbasin_id = datasets[station_id]['subbasin_id'].iloc[0]
         
-        for model_name, metrics in results[flow_col].items():
+        for model_name, metrics in results[station_id].items():
             # Training results
             train_row = {
-                'Flow_Station': flow_col,
+                'station_id': station_id,
                 'Subbasin_ID': subbasin_id,
                 'Model': model_name,
                 'Dataset': 'Training',
@@ -34,7 +38,7 @@ def save_model1_results():
             
             # Test results
             test_row = {
-                'Flow_Station': flow_col,
+                'station_id': station_id,
                 'Subbasin_ID': subbasin_id,
                 'Model': model_name,
                 'Dataset': 'Test',
@@ -49,15 +53,20 @@ def save_model1_results():
             model1_results.append(test_row)
     
     # Convert to DataFrame and save
-    import os
-    output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../outputs'))
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    output_dir = os.path.join(project_root, 'outputs')
     os.makedirs(output_dir, exist_ok=True)
     model1_df = pd.DataFrame(model1_results)
     model1_df.to_csv(os.path.join(output_dir, 'model1_performance_metrics.csv'), index=False)
     
-    print("Model 1 results saved to 'model1_performance_metrics.csv'")
+    print("Model 1 results saved to 'outputs/model1_performance_metrics.csv'")
     print("\nModel 1 Performance Summary:")
-    print(model1_df.groupby(['Flow_Station', 'Dataset'])[['RMSE', 'MAE', 'Bias', 'Nash_Sutcliffe']].mean())
+    # Verifica quais colunas existem no DataFrame antes de agrupar
+    if 'station_id' in model1_df.columns:
+        print(model1_df.groupby(['station_id', 'Dataset'])[['RMSE', 'MAE', 'Bias', 'Nash_Sutcliffe']].mean())
+    else:
+        print("Available columns:", model1_df.columns.tolist())
+        print(model1_df.head())
     
     return results, predictions, datasets
 

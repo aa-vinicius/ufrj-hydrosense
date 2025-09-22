@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from model2_error_prediction import main_model2
+import os
 
 def save_model2_results():
     """Evaluate Model 2 and save results to CSV"""
@@ -12,13 +13,20 @@ def save_model2_results():
     # Prepare Model 2 results for CSV
     model2_results_list = []
     
-    for flow_col in model2_results.keys():
-        subbasin_id = 24 if flow_col == 58030000 else 36
-        
-        for model_name, metrics in model2_results[flow_col].items():
+    if not model2_results:
+        print("No Model 2 results to process.")
+        return model1_results, model1_preds, model2_results, model2_preds, ci, datasets
+
+    for station_id in model2_results.keys():
+        # Tenta obter o subbasin_id dos dados, se disponível
+        subbasin_id = None
+        if datasets and station_id in datasets and 'subbasin_id' in datasets[station_id].columns:
+            subbasin_id = datasets[station_id]['subbasin_id'].iloc[0]
+
+        for model_name, metrics in model2_results[station_id].items():
             # Training results
             train_row = {
-                'Flow_Station': flow_col,
+                'Flow_Station': station_id,
                 'Subbasin_ID': subbasin_id,
                 'Model': model_name,
                 'Dataset': 'Training',
@@ -34,7 +42,7 @@ def save_model2_results():
             
             # Test results
             test_row = {
-                'Flow_Station': flow_col,
+                'Flow_Station': station_id,
                 'Subbasin_ID': subbasin_id,
                 'Model': model_name,
                 'Dataset': 'Test',
@@ -49,15 +57,19 @@ def save_model2_results():
             model2_results_list.append(test_row)
     
     # Convert to DataFrame and save
-    import os
-    output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../outputs'))
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    output_dir = os.path.join(project_root, 'outputs')
     os.makedirs(output_dir, exist_ok=True)
-    model2_df = pd.DataFrame(model2_results_list)
-    model2_df.to_csv(os.path.join(output_dir, 'model2_error_prediction_metrics.csv'), index=False)
     
-    print("Model 2 results saved to 'model2_error_prediction_metrics.csv'")
-    print("\nModel 2 Performance Summary:")
-    print(model2_df.groupby(['Flow_Station', 'Dataset'])[['RMSE', 'MAE', 'Bias', 'Nash_Sutcliffe']].mean())
+    if not model2_results_list:
+        print("No data to save for Model 2.")
+    else:
+        model2_df = pd.DataFrame(model2_results_list)
+        model2_df.to_csv(os.path.join(output_dir, 'model2_error_prediction_metrics.csv'), index=False)
+        
+        print("Model 2 results saved to 'outputs/model2_error_prediction_metrics.csv'")
+        print("\nModel 2 Performance Summary:")
+        print(model2_df.groupby(['Flow_Station', 'Dataset'])[['RMSE', 'MAE', 'Bias', 'Nash_Sutcliffe']].mean())
     
     return model1_results, model1_preds, model2_results, model2_preds, ci, datasets
 

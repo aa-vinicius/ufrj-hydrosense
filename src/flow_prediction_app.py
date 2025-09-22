@@ -8,6 +8,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import warnings
+import os
 warnings.filterwarnings('ignore')
 
 def nash_sutcliffe_efficiency(observed, predicted):
@@ -56,52 +57,74 @@ def calculate_metrics(observed, predicted):
         metrics['Bias'] = np.nan
     return metrics
 
-def process_flow_data():
-    """Load and process flow data to monthly scale, filtering negative values"""
-    print("Processing flow data...")
-    
-    # Load flow data
-    flow_data = pd.read_excel('../data/Vazao_FUNIL.xlsx', sheet_name='Vazao_FUNIL')
-    
-    # Convert Data column to datetime
-    flow_data['Data'] = pd.to_datetime(flow_data['Data'])
-    
-    # Filter out negative values (replace with NaN)
-    target_cols = [58030000, 58060000]
-    for col in target_cols:
-        flow_data.loc[flow_data[col] < 0, col] = np.nan
-    
-    # Convert to monthly data
-    flow_data.set_index('Data', inplace=True)
-    monthly_flow = flow_data[target_cols].resample('ME').mean()
-    
-    # Create year and month columns
-    monthly_flow['year'] = monthly_flow.index.year
-    monthly_flow['month'] = monthly_flow.index.month
-    
-    # Reset index
-    monthly_flow.reset_index(inplace=True)
-    
-    print(f"Monthly flow data shape: {monthly_flow.shape}")
-    print(f"Date range: {monthly_flow['Data'].min()} to {monthly_flow['Data'].max()}")
-    
-    return monthly_flow
-
 def load_meteorological_data():
-    """Carrega os dados meteorológicos já no novo formato"""
-    print("Loading meteorological data...")
-    met_data = pd.read_csv('data/meteo_vazao_shifted_station_58030000.csv')
-    # Não há mais sufixos _x/_y, e as colunas já estão padronizadas
-    predictor_cols = ['year', 'month', 'u2', 'tmin', 'tmax', 'rs', 'rh', 'eto', 'pr']
-    id_col = ['subbasin_id', 'station_id']
-    target_col = ['flow_next_month']
-    met_data_clean = met_data[predictor_cols + id_col + target_col].copy()
-    print(f"Meteorological data shape: {met_data_clean.shape}")
-    return met_data_clean
+    """
+    Carrega e processa múltiplos arquivos de dados meteorológicos da pasta 'data'.
+    Agrega os dados por mês, calculando a média para registros duplicados.
+    """
+    print("Loading and processing meteorological data from all station files...")
+    
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    data_dir = os.path.join(project_root, 'data')
+    
+    all_station_data = []
+    
+    # Itera sobre todos os arquivos CSV no diretório de dados
+    for filename in os.listdir(data_dir):
+        if filename.startswith('meteo_vazao_shifted_station_') and filename.endswith('.csv'):
+            file_path = os.path.join(data_dir, filename)
+            print(f"Processing file: {filename}")
+            
+            try:
+                # Detecta o separador automaticamente
+                station_data = pd.read_csv(file_path, sep=None, engine='python')
+                
+                # Colunas a serem mantidas e agrupadas
+                predictor_cols = ['year', 'month', 'u2', 'tmin', 'tmax', 'rs', 'rh', 'eto', 'pr']
+                id_cols = ['subbasin_id', 'station_id']
+                target_col = ['flow_next_month']
+                
+                # Garante que todas as colunas necessárias existem
+                required_cols = predictor_cols + id_cols + target_col
+                if not all(col in station_data.columns for col in required_cols):
+                    print(f"  [Warning] Skipping file {filename} due to missing columns.")
+                    continue
+
+                # Agrupa por ano e mês, calculando a média das outras colunas
+                # As colunas de ID (subbasin_id, station_id) devem ser constantes, então pegamos a primeira
+                agg_dict = {col: 'mean' for col in predictor_cols + target_col if col not in ['year', 'month']}
+                agg_dict['subbasin_id'] = 'first'
+                agg_dict['station_id'] = 'first'
+
+                monthly_agg_data = station_data.groupby(['year', 'month']).agg(agg_dict).reset_index()
+
+                all_station_data.append(monthly_agg_data)
+                
+            except Exception as e:
+                print(f"  [Error] Failed to process file {filename}: {e}")
+
+    if not all_station_data:
+        print("No valid meteorological data found. Exiting.")
+        return pd.DataFrame()
+
+    # Concatena os dados de todas as estações em um único DataFrame
+    combined_data = pd.concat(all_station_data, ignore_index=True)
+    
+    print(f"Total processed data shape: {combined_data.shape}")
+    print(f"Unique stations found: {combined_data['station_id'].unique().tolist()}")
+    
+    return combined_data
+
+# A função process_flow_data não é mais necessária, pois os novos arquivos contêm tudo.
+# Vamos removê-la ou comentá-la para evitar confusão.
+def process_flow_data():
+    """Esta função foi descontinuada. Os dados de vazão agora são carregados junto com os dados meteorológicos."""
+    print("[Info] process_flow_data is deprecated and no longer in use.")
+    return None
 
 def merge_data(flow_data, met_data):
     """Com a nova estrutura, não é necessário merge externo. Apenas filtra por estação/subbacia se necessário."""
-    if flow_data is None or met_data is None or flow_data.empty or met_data.empty:
+    if met_data is None or met_data.empty:
         return {}
     print("Preparando datasets por estação...")
     merged_datasets = {}
@@ -124,9 +147,10 @@ def train_models(data, target_col='flow_next_month', train_year_cutoff=2019):
         print(f"Warning: Todos os dados possuem NaN para {target_col}")
         return None, None
 
-    # Split data
-    train_data = data_clean[(data_clean['year'] >= 1998) & (data_clean['year'] <= train_year_cutoff)]
-    test_data = data_clean[(data_clean['year'] >= 2020) & (data_clean['year'] <= 2024)]
+    # Split data - flexível baseado nos dados disponíveis
+    train_data = data_clean[data_clean['year'] <= train_year_cutoff]
+    test_data = data_clean[data_clean['year'] > train_year_cutoff]
+    print(f"  Train data: {len(train_data)} records, Test data: {len(test_data)} records")
     if len(train_data) == 0 or len(test_data) == 0:
         print(f"Warning: Insufficient data for {target_col}")
         return None, None
@@ -187,18 +211,33 @@ def main():
     """Main function"""
     print("Starting Flow Prediction Application")
     print("=" * 50)
-    # Carrega dados já no novo formato
+    # Carrega e processa todos os dados meteorológicos
     met_data = load_meteorological_data()
-    merged_datasets = merge_data(met_data, met_data)
+    
+    if met_data.empty:
+        print("No data to process. Exiting.")
+        return {}, {}, {}
+
+    # A função merge_data agora apenas separa os dados por estação
+    merged_datasets = merge_data(None, met_data)
+    
     # Treina modelos para cada estação
     all_results = {}
     all_predictions = {}
-    for station_id in merged_datasets:
-        print(f"\n{'='*20} Processing station {station_id} {'='*20}")
-        results, predictions = train_models(merged_datasets[station_id], 'flow_next_month')
+    for station_id, data in merged_datasets.items():
+        print(f"\n--- Processing Station: {station_id} ---")
+        print(f"Station data shape: {data.shape}")
+        print(f"Station data columns: {data.columns.tolist()}")
+        results, predictions = train_models(data, target_col='flow_next_month')
         if results:
             all_results[station_id] = results
             all_predictions[station_id] = predictions
+            print(f"✅ Successfully trained models for station {station_id}")
+        else:
+            print(f"❌ Could not train models for station {station_id} due to data issues.")
+            
+    print("\n" + "=" * 50)
+    print("Flow Prediction Application Finished")
     return all_results, all_predictions, merged_datasets
 
 if __name__ == "__main__":

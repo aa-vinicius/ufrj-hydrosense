@@ -18,13 +18,13 @@ def run_script(script_path, description):
     print(f"{'='*60}")
     
     try:
-        # Change to src directory to run the script
-        venv_python = Path('.venv-prod/bin/python').resolve()
-        if not venv_python.exists():
-            raise RuntimeError("Python do ambiente .venv-prod não encontrado. Rode setup_ambientes.sh.")
+        # Use o mesmo executável Python que está executando este script
+        venv_python = sys.executable
+        # Use o mesmo executável Python que está executando este script
+        venv_python = sys.executable
         result = subprocess.run([str(venv_python), script_path],
+                                check=True,
                                 cwd='src',
-                                capture_output=False,
                                 text=True)
         
         if result.returncode == 0:
