@@ -15,15 +15,10 @@ def save_model1_results():
     
     for station_id in results.keys():
         # Tenta obter o subbasin_id dos dados, se disponível
-        subbasin_id = None
-        if datasets and station_id in datasets and 'subbasin_id' in datasets[station_id].columns:
-            subbasin_id = datasets[station_id]['subbasin_id'].iloc[0]
-        
         for model_name, metrics in results[station_id].items():
             # Training results
             train_row = {
                 'station_id': station_id,
-                'Subbasin_ID': subbasin_id,
                 'Model': model_name,
                 'Dataset': 'Training',
                 'RMSE': metrics['train']['RMSE'],
@@ -35,11 +30,9 @@ def save_model1_results():
                 'Nash_Sutcliffe': metrics['train']['Nash_Sutcliffe']
             }
             model1_results.append(train_row)
-            
             # Test results
             test_row = {
                 'station_id': station_id,
-                'Subbasin_ID': subbasin_id,
                 'Model': model_name,
                 'Dataset': 'Test',
                 'RMSE': metrics['test']['RMSE'],

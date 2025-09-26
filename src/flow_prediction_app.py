@@ -90,13 +90,17 @@ def load_meteorological_data():
                     print(f"  [Warning] Skipping file {filename} due to missing columns.")
                     continue
 
+
                 # Agrupa por ano e mês, calculando a média das outras colunas
-                # As colunas de ID (subbasin_id, station_id) devem ser constantes, então pegamos a primeira
+                # subbasin_id não faz mais sentido após o agrupamento, então não será mantido
                 agg_dict = {col: 'mean' for col in predictor_cols + target_col if col not in ['year', 'month']}
-                agg_dict['subbasin_id'] = 'first'
                 agg_dict['station_id'] = 'first'
 
                 monthly_agg_data = station_data.groupby(['year', 'month']).agg(agg_dict).reset_index()
+
+                # Remove a coluna subbasin_id se existir
+                if 'subbasin_id' in monthly_agg_data.columns:
+                    monthly_agg_data = monthly_agg_data.drop(columns=['subbasin_id'])
 
                 all_station_data.append(monthly_agg_data)
                 

@@ -22,9 +22,7 @@ def create_time_series_plots():
     for station_id in model1_preds.keys():
         print(f"\nGenerating plot for Station ID: {station_id}")
 
-        subbasin_id = None
-        if datasets and station_id in datasets and 'subbasin_id' in datasets[station_id].columns:
-            subbasin_id = datasets[station_id]['subbasin_id'].iloc[0]
+        # subbasin_id não faz mais sentido após o agrupamento por mês/ano
         
         if 'Random_Forest' not in model1_preds[station_id]:
             print(f"  [Warning] 'Random_Forest' model not found for station {station_id}. Skipping plot.")
@@ -55,8 +53,6 @@ def create_time_series_plots():
         plt.fill_between(dates, lower_bound, upper_bound, alpha=0.3, color='gray', label='95% Confidence Interval')
         
         title = f'Flow Prediction - Station {station_id}'
-        if subbasin_id:
-            title += f' (Subbasin {int(subbasin_id)})'
         plt.title(title, fontsize=16, fontweight='bold')
         plt.xlabel('Date', fontsize=12)
         plt.ylabel('Flow (m³/s)', fontsize=12)

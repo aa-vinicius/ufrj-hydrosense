@@ -18,16 +18,10 @@ def save_model2_results():
         return model1_results, model1_preds, model2_results, model2_preds, ci, datasets
 
     for station_id in model2_results.keys():
-        # Tenta obter o subbasin_id dos dados, se disponível
-        subbasin_id = None
-        if datasets and station_id in datasets and 'subbasin_id' in datasets[station_id].columns:
-            subbasin_id = datasets[station_id]['subbasin_id'].iloc[0]
-
         for model_name, metrics in model2_results[station_id].items():
             # Training results
             train_row = {
                 'Flow_Station': station_id,
-                'Subbasin_ID': subbasin_id,
                 'Model': model_name,
                 'Dataset': 'Training',
                 'RMSE': metrics['train']['RMSE'],
@@ -39,11 +33,9 @@ def save_model2_results():
                 'Nash_Sutcliffe': metrics['train']['Nash_Sutcliffe']
             }
             model2_results_list.append(train_row)
-            
             # Test results
             test_row = {
                 'Flow_Station': station_id,
-                'Subbasin_ID': subbasin_id,
                 'Model': model_name,
                 'Dataset': 'Test',
                 'RMSE': metrics['test']['RMSE'],

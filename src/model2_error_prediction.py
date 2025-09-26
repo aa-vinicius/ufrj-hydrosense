@@ -15,14 +15,16 @@ def train_error_models(data, target_col, model1_predictions, train_year_cutoff=2
     if data is None or data.empty or not all(col in data.columns for col in predictor_cols):
         print(f"Warning: DataFrame vazio ou colunas ausentes para {target_col}")
         return None, None
-    # Split data - flexível baseado nos dados disponíveis
-    train_data = data[data['year'] <= train_year_cutoff]
-    test_data = data[data['year'] > train_year_cutoff]
-    if len(train_data) == 0 or len(test_data) == 0:
-        print(f"Warning: Insufficient data for {target_col}")
+    # Alinhar X_train/X_test com os índices de y_train/y_test do Model 1
+    best_model = 'Random_Forest'
+    if best_model not in model1_predictions:
+        print(f"Warning: {best_model} not found in Model 1 predictions")
         return None, None
-    X_train = train_data[predictor_cols]
-    X_test = test_data[predictor_cols]
+    y_train = model1_predictions[best_model]['y_train']
+    y_test = model1_predictions[best_model]['y_test']
+    # Seleciona X_train/X_test usando os mesmos índices de y_train/y_test
+    X_train = data.loc[y_train.index, predictor_cols]
+    X_test = data.loc[y_test.index, predictor_cols]
     # Scale features
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
@@ -76,8 +78,8 @@ def train_error_models(data, target_col, model1_predictions, train_year_cutoff=2
             'test_error_pred': test_error_pred,
             'train_errors': train_errors,
             'test_errors': test_errors,
-            'train_dates': train_data[['year', 'month']],
-            'test_dates': test_data[['year', 'month']]
+            'train_dates': data.loc[y_train.index, ['year', 'month']],
+            'test_dates': data.loc[y_test.index, ['year', 'month']]
         }
     return results, predictions
 
