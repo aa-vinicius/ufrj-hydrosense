@@ -1,0 +1,32 @@
+# Requirements for Hydrosense v2.0 Flow Model Notebook
+# Core data science packages
+numpy>=1.21.0
+pandas>=1.3.0
+scipy>=1.7.0
+
+# Machine learning packages
+scikit-learn>=1.0.0
+xgboost>=1.6.0
+lightgbm>=3.3.0
+
+# Evolutionary algorithms
+deap>=1.3.0
+
+# SHAP for model interpretability
+shap>=0.41.0
+
+# Visualization packages
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+# File handling
+openpyxl>=3.0.0
+
+# Jupyter notebook support
+jupyter>=1.0.0
+ipykernel>=6.0.0
+notebook>=6.0.0
+jupyterlab>=3.0.0
+
+# Additional utilities (standard library, but good to have explicit versions)
+# Note: random, os, sys, warnings are standard library modules
